@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profil vozača - {{ vozac.ime }}</title>
+</head>
+<body>
+    <h1>Profil vozača: {{ vozac.ime }}</h1>
+
+    <h3>Financije</h3>
+    <p><strong>Zaduženje prošli mjesec:</strong> {{ vozac.zaduzenje_prethodni_mjesec }}</p>
+    <p><strong>Uplaćeno na banku:</strong> {{ vozac.uplaceno_na_banku }}</p>
+
+    <h3>Ture vozača</h3>
+    {% if ture %}
+        <table border="1" cellpadding="5">
+            <tr>
+                <th>Relacija</th>
+                <th>Datum polaska</th>
+                <th>Datum dolaska</th>
+                <th>Kilometri</th>
+                <th>Zaduženje</th>
+                <th>Razduženje</th>
+                <th>Razlika</th>
+                <th>Iznos ture</th>
+                <th>Dnevnice</th>
+                <th>Čekanje</th>
+            </tr>
+            {% for tura in ture %}
+            <tr>
+                <td>{{ tura.relacija }}</td>
+                <td>{{ tura.datum_polaska }}</td>
+                <td>{{ tura.datum_dolaska }}</td>
+                <td>{{ tura.kilometraza }}</td>
+                <td>{{ tura.zaduzenje }}</td>
+                <td>{{ tura.razduzenje }}</td>
+                <td>{{ tura.razlika }}</td>
+                <td>{{ tura.iznos_ture }}</td>
+                <td>{{ tura.dnevnice }}</td>
+                <td>{{ tura.cekanje }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <th colspan="3"></th>
+                <th>{{ total_km }}</th>
+                <th>{{ total_razlika }}</th>
+                <th>{{ total_iznos }}</th>
+                <th>{{ total_dnevnice }}</th>
+                <th>{{ total_cekanje }}</th>
+                <th>{{ bilanca }}</th>
+            </tr>
+            <tr>
+                <th colspan="3">Ukupno:</th>
+                <th>{{ bilanca }}</th>
+            </tr>
+        </table>
+    {% else %}
+        <p>Ovaj vozač još nema unešenih tura.</p>
+    {% endif %}
+
+    <p><a href="{% url 'unos_vozaca' %}">← Povratak na popis vozača</a></p>
+</body>
+</html>

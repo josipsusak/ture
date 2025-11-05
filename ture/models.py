@@ -1,6 +1,15 @@
 from django.db import models
 
+class Vozac(models.Model):
+    ime = models.CharField(max_length=100)
+    zaduzenje_prethodni_mjesec = models.FloatField(default=0)
+    uplaceno_na_banku = models.FloatField(default=0)
+
+    def __str__(self):
+        return self.ime
+
 class Tura(models.Model):
+    vozac = models.ForeignKey(Vozac, on_delete=models.CASCADE, related_name='ture')
     relacija = models.CharField(max_length=255)
     datum_polaska = models.DateField()
     datum_dolaska = models.DateField()
@@ -12,6 +21,9 @@ class Tura(models.Model):
     iznos_ture = models.FloatField()
     dnevnice = models.FloatField(blank=True, null=True) 
     cekanje = models.FloatField(blank=True, null=True)   
+    
+    def __str__(self):
+        return f"{self.vozac.ime} - {self.relacija}"
 
     def save(self, *args, **kwargs):
         # Razlika = Zaduženje - Razduženje
