@@ -7,8 +7,12 @@
     <h1>Profil vozača: {{ vozac.ime }}</h1>
 
     <h3>Financije</h3>
-    <p><strong>Zaduženje prošli mjesec:</strong> {{ vozac.zaduzenje_prethodni_mjesec }}</p>
-    <p><strong>Uplaćeno na banku:</strong> {{ vozac.uplaceno_na_banku }}</p>
+
+    <form method="post" style="margin-bottom: 20px;">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Spremi promjene</button>
+    </form>
 
     <h3>Ture vozača</h3>
     {% if ture %}
@@ -42,12 +46,15 @@
             <tr>
                 <th colspan="3"></th>
                 <th>{{ total_km }}</th>
+                <th>{{ total_zaduz }}</th>
+                <th>{{ total_razduz }}</th>
                 <th>{{ total_razlika }}</th>
                 <th>{{ total_iznos }}</th>
                 <th>{{ total_dnevnice }}</th>
                 <th>{{ total_cekanje }}</th>
-                <th>{{ bilanca }}</th>
             </tr>
+        </table>
+        <table border="1" cellpadding="5">
             <tr>
                 <th colspan="3">Ukupno:</th>
                 <th>{{ bilanca }}</th>
@@ -57,6 +64,6 @@
         <p>Ovaj vozač još nema unešenih tura.</p>
     {% endif %}
 
-    <p><a href="{% url 'unos_vozaca' %}">← Povratak na popis vozača</a></p>
+    <p><a href="{% url 'popis_vozaca' %}">← Povratak na popis vozača</a></p>
 </body>
 </html>

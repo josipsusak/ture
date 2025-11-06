@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum
 from .models import Tura, Vozac
-from .forms import TuraForm, VozacForm
+from .forms import TuraForm, VozacForm, VozacUpdateForm
 
 def home(request):
     if request.method == 'POST':
@@ -44,16 +44,28 @@ def unos_vozaca(request):
         form = VozacForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('unos_vozaca')
+            return redirect('popis_vozaca')
     else:
         form = VozacForm()
 
-    vozaci = Vozac.objects.all()
-    return render(request, 'unos_vozaca.html', {'form': form, 'vozaci': vozaci})
+    vozac = Vozac.objects.all()
+    return render(request, 'popis_vozaca.html', {'form': form, 'vozaci': vozac})
 
 def profil_vozaca(request, vozac_id):
     vozac = get_object_or_404(Vozac, id=vozac_id)
     ture = Tura.objects.filter(vozac=vozac).order_by('datum_polaska')
+    
+    if request.method == 'POST':
+        form = VozacUpdateForm(request.POST, instance=vozac)
+        if form.is_valid():
+            form.save()
+            for tura in ture:
+                if tura.iznos_ture:
+                    tura.dnevnice = round(tura.iznos_ture * vozac.postotak , 2)
+                    tura.save(update_fields=['dnevnice'])
+            return redirect('profil_vozaca', vozac_id=vozac.id)
+    else:
+        form = VozacUpdateForm(instance=vozac)
 
     # Izračun suma
     total_km = ture.aggregate(Sum('kilometraza'))['kilometraza__sum'] or 0
@@ -65,7 +77,7 @@ def profil_vozaca(request, vozac_id):
     total_cekanje = ture.aggregate(Sum('cekanje'))['cekanje__sum'] or 0
 
     # Prenos i bilanca
-    bilanca = ( total_razlika - total_dnevnice - total_cekanje - vozac.zaduzenje_prethodni_mjesec - vozac.uplaceno_na_banku)
+    bilanca = round(( total_razlika - total_dnevnice - total_cekanje + vozac.zaduzenje_prethodni_mjesec + vozac.uplaceno_na_banku),2)
 
     return render(request, 'profil_vozaca.html', {
         'vozac': vozac,
@@ -78,5 +90,18 @@ def profil_vozaca(request, vozac_id):
         'total_dnevnice': total_dnevnice,
         'total_cekanje': total_cekanje,
         'bilanca': bilanca,
+        'form': form,
     })
+    
+def dodavanje_vozaca(request):
+    if request.method == 'POST':
+        form = VozacForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('popis_vozaca')
+    else:
+        form = VozacForm()
+
+    return render(request, 'dodavanje_vozaca.html', {'form': form})
+
 

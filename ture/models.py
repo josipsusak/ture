@@ -4,6 +4,7 @@ class Vozac(models.Model):
     ime = models.CharField(max_length=100)
     zaduzenje_prethodni_mjesec = models.FloatField(default=0)
     uplaceno_na_banku = models.FloatField(default=0)
+    postotak = models.FloatField(default=0)
 
     def __str__(self):
         return self.ime
@@ -31,7 +32,7 @@ class Tura(models.Model):
             self.razlika = self.zaduzenje - self.razduzenje
         
         # Dnevnice = (iznos_ture*1.16) - iznos_ture = iznos_ture * 0.16
-        if self.iznos_ture is not None:
-            self.dnevnice = round(self.iznos_ture * 0.16, 2)
+        if self.iznos_ture is not None and self.vozac and self.vozac.postotak:
+            self.dnevnice = round(self.iznos_ture * self.vozac.postotak, 2)
 
         super().save(*args, **kwargs)

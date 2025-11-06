@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Popis vozača</title>
+</head>
+<body>
+<h2>Popis vozača</h2>
+<ul>
+    {% for v in vozaci %}
+        <li>
+            <a href="{% url 'profil_vozaca' v.id %}">
+                {{ v.ime }}
+            </a> —
+            Zaduženje prošli mjesec: {{ v.zaduzenje_prethodni_mjesec }} —
+            Uplaćeno na banku: {{ v.uplaceno_na_banku }} —
+            Postotak: {{ v.postotak|floatformat:2 }}
+        </li>
+    {% empty %}
+        <li>Nema unesenih vozača.</li>
+    {% endfor %}
+</ul>
+</body>
+</html>
