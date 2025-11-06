@@ -63,7 +63,7 @@ def profil_vozaca(request, vozac_id):
                 if tura.iznos_ture:
                     tura.dnevnice = round(tura.iznos_ture * vozac.postotak , 2)
                     tura.save(update_fields=['dnevnice'])
-            return redirect('profil_vozaca', vozac_id=vozac.id)
+            return redirect('profil_vozaca', vozac_id=vozac.id) # type: ignore
     else:
         form = VozacUpdateForm(instance=vozac)
 
