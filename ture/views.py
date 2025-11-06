@@ -12,7 +12,7 @@ def home(request):
     else:
         form = TuraForm()
 
-    ture = Tura.objects.all().order_by('datum_polaska')
+    ture = Tura.objects.filter(aktivan=True).order_by('datum_polaska')
 
     # Ukupne vrijednosti
     total_km = ture.aggregate(Sum('kilometraza'))['kilometraza__sum'] or 0
@@ -104,4 +104,8 @@ def dodavanje_vozaca(request):
 
     return render(request, 'dodavanje_vozaca.html', {'form': form})
 
-
+def zavrsi_turu(request, tura_id):
+    tura = get_object_or_404(Tura, id=tura_id)
+    tura.aktivan = False
+    tura.save()
+    return redirect('unos_ture')  # Vrati korisnika na popis aktivnih tura

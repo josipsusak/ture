@@ -21,7 +21,8 @@ class Tura(models.Model):
     broj_putnog_naloga = models.CharField(max_length=50, blank=True, null=True)
     iznos_ture = models.FloatField()
     dnevnice = models.FloatField(blank=True, null=True) 
-    cekanje = models.FloatField(blank=True, null=True)   
+    cekanje = models.FloatField(blank=True, null=True) 
+    aktivan = models.BooleanField(default=True)  
     
     def __str__(self):
         return f"{self.vozac.ime} - {self.relacija}"

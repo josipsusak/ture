@@ -23,6 +23,7 @@
     <h2>Popis svih tura</h2>
     <table>
         <tr>
+            <th>Vozač</th>
             <th>Relacija</th>
             <th>Datum polaska</th>
             <th>Datum dolaska</th>
@@ -37,6 +38,7 @@
         </tr>
         {% for t in ture %}
         <tr>
+            <td><a href="{% url 'profil_vozaca' t.vozac.id %}">{{ t.vozac.ime}}</a></td>
             <td>{{ t.relacija }}</td>
             <td>{{ t.datum_polaska }}</td>
             <td>{{ t.datum_dolaska }}</td>
@@ -48,26 +50,19 @@
             <td>{{ t.iznos_ture }}</td>
             <td>{{ t.dnevnice }}</td>
             <td>{{ t.cekanje|default:"-" }}</td>
+            <td>
+                <form action="{% url 'zavrsi_turu' t.id %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="background:#ff6666; color:white; border:none; padding:5px 10px; cursor:pointer;">
+                        Završi turu
+                    </button>
+                </form>
+            </td>
         </tr>
         {% empty %}
-        <tr><td colspan="11">Nema unesenih tura.</td></tr>
+        <tr><td colspan="13">Nema aktivnih tura.</td></tr>
         {% endfor %}
 
-        <tr class="totals">
-            <td colspan="3">Ukupno</td>
-            <td>{{ total_km }}</td>
-            <td>{{ total_zaduz }}</td>
-            <td>{{ total_razduz }}</td>
-            <td>{{ total_razlika }}</td>
-            <td>-</td>
-            <td>{{ total_iznos }}</td>
-            <td>{{ total_dnevnice }}</td>
-            <td>{{ total_cekanje }}</td>
-        </tr>
-        <tr class="totals">
-            <td colspan="10">Prenos u sljedeći mjesec</td>
-            <td>{{ prenos }}</td>
-        </tr>
     </table>
 </body>
 </html>
