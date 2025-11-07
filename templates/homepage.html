@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ture vozača</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+        th { background: #f2f2f2; }
+        form { margin-bottom: 40px; }
+        input, select { padding: 4px; }
+        .totals { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Popis svih tura</h2>
+    <table>
+        <tr>
+            <th>Vozač</th>
+            <th>Relacija</th>
+            <th>Datum polaska</th>
+            <th>Datum dolaska</th>
+            <th>Broj prijeđenih km</th>
+            <th>Zaduženje</th>
+            <th>Razduženje</th>
+            <th>Razlika</th>
+            <th>Br.putnog naloga</th>
+            <th>Iznos</th>
+            <th>Dnevnice</th>
+            <th>Čekanje</th>
+        </tr>
+        {% for t in ture %}
+        <tr>
+            <td><a href="{% url 'profil_vozaca' t.vozac.id %}">{{ t.vozac.ime}}</a></td>
+            <td>{{ t.relacija }}</td>
+            <td>{{ t.datum_polaska }}</td>
+            <td>{{ t.datum_dolaska }}</td>
+            <td>{{ t.kilometraza }}</td>
+            <td>{{ t.zaduzenje }}</td>
+            <td>{{ t.razduzenje }}</td>
+            <td>{{ t.razlika }}</td>
+            <td>{{ t.broj_putnog_naloga }}</td>
+            <td>{{ t.iznos_ture }}</td>
+            <td>{{ t.dnevnice }}</td>
+            <td>{{ t.cekanje|default:"-" }}</td>
+            <td>
+                <form action="{% url 'zavrsi_turu' t.id %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="background:#ff6666; color:white; border:none; padding:5px 10px; cursor:pointer;">
+                        Završi turu
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="13">Nema aktivnih tura.</td></tr>
+        {% endfor %}
+
+    </table>
+</body>
+</html>
