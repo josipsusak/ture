@@ -31,7 +31,7 @@ def homepage(request):
         'prenos': prenos,
     })
 
-def home(request):
+def unos_ture(request):
     if request.method == 'POST':
         form = TuraForm(request.POST)
         if form.is_valid():
@@ -54,7 +54,7 @@ def home(request):
     # Prenos u sljedeći mjesec 
     prenos = total_razlika - total_dnevnice - total_cekanje
 
-    return render(request, 'home.html', {
+    return render(request, 'unos_ture.html', {
         'form': form,
         'ture': ture,
         'total_km': total_km,
