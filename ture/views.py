@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum
-from .models import Tura, Vozac
-from .forms import TuraForm, VozacForm, VozacUpdateForm
+from .models import Tura, Vozac, Vozilo, Naputak
+from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm
 
 def homepage(request):
 
@@ -150,3 +150,80 @@ def profil_ture(request, tura_id):
         form = TuraForm(instance=tura)
 
     return render(request, 'profil_ture.html', {'tura': tura, 'form': form})
+
+def popis_vozila(request):
+    vozila = Vozilo.objects.all().order_by('ime')
+    return render(request, 'vozila/popis_vozila.html', {'vozila': vozila})
+
+def detalji_vozila(request, vozilo_id):
+    vozilo = get_object_or_404(Vozilo, id=vozilo_id)
+    naputci = vozilo.naputci.all().order_by('-datum') # type: ignore
+
+    if request.method == 'POST':
+        form = NaputakForm(request.POST)
+        if form.is_valid():
+            naputak = form.save(commit=False)
+            naputak.vozilo = vozilo
+            naputak.save()
+            return redirect('detalji_vozila', vozilo_id=vozilo.id)# type: ignore
+    else:
+        form = NaputakForm()
+
+    return render(request, 'vozila/detalji_vozila.html', {
+        'vozilo': vozilo,
+        'naputci': naputci,
+        'form': form,
+    })
+
+def dodaj_vozilo(request):
+    if request.method == 'POST':
+        form = VoziloForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('popis_vozila')
+    else:
+        form = VoziloForm()
+    return render(request, 'vozila/dodaj_vozilo.html', {'form': form})
+
+def uredi_vozilo(request, vozilo_id):
+    vozilo = get_object_or_404(Vozilo, id=vozilo_id)
+    if request.method == 'POST':
+        form = VoziloForm(request.POST, instance=vozilo)
+        if form.is_valid():
+            form.save()
+            return redirect('detalji_vozila', vozilo_id=vozilo.id) # type: ignore
+    else:
+        form = VoziloForm(instance=vozilo)
+    return render(request, 'vozila/uredi_vozilo.html', {'form': form, 'vozilo': vozilo})
+
+def obrisi_vozilo(request, vozilo_id):
+    vozilo = get_object_or_404(Vozilo, id=vozilo_id)
+    if request.method == 'POST':
+        vozilo.delete()
+        return redirect('popis_vozila')
+    return render(request, 'vozila/obrisi_vozilo.html', {'vozilo': vozilo})
+
+def uredi_naputak(request, naputak_id):
+    naputak = get_object_or_404(Naputak, id=naputak_id)
+    vozilo = naputak.vozilo
+
+    if request.method == 'POST':
+        form = NaputakForm(request.POST, instance=naputak)
+        if form.is_valid():
+            form.save()
+            return redirect('detalji_vozila', vozilo_id=vozilo.id)
+    else:
+        form = NaputakForm(instance=naputak)
+
+    return render(request, 'uredi_naputak.html', {'form': form, 'naputak': naputak, 'vozilo': vozilo})
+
+
+def obrisi_naputak(request, naputak_id):
+    naputak = get_object_or_404(Naputak, id=naputak_id)
+    vozilo = naputak.vozilo
+
+    if request.method == 'POST':
+        naputak.delete()
+        return redirect('detalji_vozila', vozilo_id=vozilo.id)# type: ignore
+
+    return render(request, 'obrisi_naputak.html', {'naputak': naputak, 'vozilo': vozilo})

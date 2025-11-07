@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Obriši naputak</title>
+</head>
+<body>
+    <h2>Brisanje naputka</h2>
+    <p>Jeste li sigurni da želite obrisati ovaj naputak?</p>
+    <blockquote>{{ naputak.sadrzaj }}</blockquote>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" style="background:red; color:white;">Obriši</button>
+        <a href="{% url 'detalji_vozila' vozilo.id %}">Odustani</a>
+    </form>
+</body>
+</html>

@@ -37,3 +37,25 @@ class Tura(models.Model):
             self.dnevnice = round(self.iznos_ture * self.vozac.postotak, 2)
 
         super().save(*args, **kwargs)
+        
+class Vozilo(models.Model):
+    vozac = models.ForeignKey(Vozac, on_delete=models.SET_NULL, null=True, blank=True, related_name='vozila')
+    ime = models.CharField(max_length=100)
+    vrijeme_registracije = models.DateField()
+    servis = models.DateField()
+    dodatne_informacije = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.ime} ({self.vozac.ime if self.vozac else 'bez vozača'})"
+
+class Naputak(models.Model):
+    vozilo = models.ForeignKey('Vozilo', on_delete=models.CASCADE, related_name='naputci')
+    sadrzaj = models.TextField("Sadržaj naputka")
+    datum = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-datum']
+
+    def __str__(self):
+        return f"Naputak za {self.vozilo.ime} ({self.datum.strftime('%d.%m.%Y %H:%M')})"
+    

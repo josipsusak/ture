@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head><title>Brisanje vozila</title></head>
+<body>
+<h2>Brisanje vozila</h2>
+<p>Jeste li sigurni da želite obrisati vozilo <strong>{{ vozilo.ime }}</strong>?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Da, obriši</button>
+    <a href="{% url 'popis_vozila' %}">Odustani</a>
+</form>
+</body>
+</html>

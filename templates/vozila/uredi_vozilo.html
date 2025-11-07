@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head><title>Uredi vozilo</title></head>
+<body>
+<h2>Uredi vozilo: {{ vozilo.ime }}</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Spremi promjene</button>
+</form>
+<p><a href="{% url 'detalji_vozila' vozilo.id %}">Odustani</a></p>
+</body>
+</html>

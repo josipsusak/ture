@@ -13,7 +13,11 @@
     </style>
 </head>
 <body>
-<p><a href="{% url 'dodavanje_vozaca' %}">Dodaj vozača</a> | <a href="{% url 'unos_ture' %}">Dodaj turu</a></p>
+<p>
+    <a href="{% url 'popis_vozaca' %}">Popis vozača</a> | 
+    <a href="{% url 'unos_ture' %}">Dodaj turu</a> | 
+    <a href="{% url 'popis_vozila' %}">Popis vozila</a>
+</p>
     <h2>Popis svih tura</h2>
     <table>
         <tr>
@@ -34,7 +38,6 @@
         <tr>
             <td><a href="{% url 'profil_vozaca' t.vozac.id %}">{{ t.vozac.ime}}</a></td>
             <td><a href="{% url 'profil_ture' t.id %}">{{ t.relacija}}</a></td>
-            {% comment %} <td>{{ t.relacija }}</td> {% endcomment %}
             <td>{{ t.datum_polaska }}</td>
             <td>{{ t.datum_dolaska }}</td>
             <td>{{ t.kilometraza }}</td>

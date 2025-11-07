@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Detalji vozila</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        textarea { width: 100%; height: 80px; }
+        input[type=text] { width: 100%; }
+        form { margin-top: 20px; }
+        .naputak { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<h2>Detalji o vozilu: {{ vozilo.ime }}</h2>
+
+<p><strong>Vozač:</strong>
+{% if vozilo.vozac %}
+    <a href="{% url 'profil_vozaca' vozilo.vozac.id %}">{{ vozilo.vozac.ime }}</a>
+{% else %}
+    (nema vozača)
+{% endif %}
+</p>
+
+<p><strong>Vrijeme registracije:</strong> {{ vozilo.vrijeme_registracije }}</p>
+<p><strong>Servis:</strong> {{ vozilo.servis }}</p>
+
+<h3>Naputci</h3>
+<ul>
+    {% for n in naputci %}
+        <li>
+            {{ n.datum|date:"d.m.Y H:i" }} — {{ n.sadrzaj }}
+            <a href="{% url 'uredi_naputak' n.id %}">✏️</a>
+            <a href="{% url 'obrisi_naputak' n.id %}">🗑️</a>
+        </li>
+    {% empty %}
+        <li>Nema naputaka.</li>
+    {% endfor %}
+</ul>
+
+<h3>Dodaj novi naputak</h3>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Spremi naputak</button>
+</form>
+
+<p>
+    <a href="{% url 'uredi_vozilo' vozilo.id %}">Uredi vozilo</a> |
+    <a href="{% url 'popis_vozila' %}">Nazad na popis</a>
+</p>
+
+</body>
+</html>

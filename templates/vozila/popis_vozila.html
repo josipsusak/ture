@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Popis vozila</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h2>Popis vozila</h2>
+    <p><a href="{% url 'dodaj_vozilo' %}">Dodaj novo vozilo</a> | <a href="{% url 'homepage' %}">Početna</a></p>
+
+    <table>
+        <tr>
+            <th>Ime</th>
+            <th>Vozač</th>
+            <th>Vrijeme registracije</th>
+            <th>Servis</th>
+            <th>Akcije</th>
+        </tr>
+        {% for v in vozila %}
+        <tr>
+            <td><a href="{% url 'detalji_vozila' v.id %}">{{ v.ime }}</a></td>
+            <td>
+                {% if v.vozac %}
+                    <a href="{% url 'profil_vozaca' v.vozac.id %}">{{ v.vozac.ime }}</a>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td>{{ v.vrijeme_registracije }}</td>
+            <td>{{ v.servis }}</td>
+            <td>
+                <a href="{% url 'uredi_vozilo' v.id %}">Uredi</a> |
+                <a href="{% url 'obrisi_vozilo' v.id %}">Obriši</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">Nema unesenih vozila.</td></tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

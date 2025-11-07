@@ -4,6 +4,9 @@
     <title>Popis vozača</title>
 </head>
 <body>
+<p>
+    <a href="{% url 'dodavanje_vozaca' %}">Dodaj vozača</a> | <a href="{% url 'homepage' %}">Početna</a>
+</p>
 <h2>Popis vozača</h2>
 <ul>
     {% for v in vozaci %}
@@ -18,7 +21,6 @@
     {% empty %}
         <li>Nema unesenih vozača.</li>
     {% endfor %}
-    <p><a href="{% url 'homepage' %}">← Povratak na naslovnu stranicu</a></p>
 </ul>
 </body>
 </html>

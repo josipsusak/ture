@@ -1,5 +1,5 @@
 from django import forms
-from .models import Tura, Vozac
+from .models import Tura, Vozac, Vozilo, Naputak
 
 class VozacForm(forms.ModelForm):
     class Meta:
@@ -53,3 +53,24 @@ class VozacUpdateForm(forms.ModelForm):
             'uplaceno_na_banku': 'Uplaćeno na banku za prošli mjesec',
             'postotak': 'Postotak vozača',
         }
+        
+class VoziloForm(forms.ModelForm):
+    class Meta:
+        model = Vozilo
+        fields = ['vozac', 'ime', 'vrijeme_registracije', 'servis', 'dodatne_informacije']
+        widgets = {
+            'vrijeme_registracije': forms.DateInput(attrs={'type': 'date'}),
+            'servis': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+class NaputakForm(forms.ModelForm):
+    class Meta:
+        model = Naputak
+        fields = ['sadrzaj']
+        widgets = {
+            'sadrzaj': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Upiši naputak...'})
+        }
+        labels = {
+            'sadrzaj': 'Sadržaj naputka',
+        }
+        
