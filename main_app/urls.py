@@ -8,5 +8,4 @@ from main_app import views
 
 urlpatterns = [
     path("", include("ture.urls")) 
-
 ]
