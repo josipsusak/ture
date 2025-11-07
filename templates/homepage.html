@@ -13,6 +13,16 @@
     </style>
 </head>
 <body>
+{% if upozorenja %}
+    <div style="background-color:#fff3cd; border:1px solid #ffeeba; padding:10px; margin-bottom:20px;">
+        <strong>Upozorenja:</strong>
+        <ul>
+            {% for u in upozorenja %}
+                <li>{{ u }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
 <p>
     <a href="{% url 'popis_vozaca' %}">Popis vozača</a> | 
     <a href="{% url 'unos_ture' %}">Dodaj turu</a> | 

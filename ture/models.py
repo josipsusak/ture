@@ -1,4 +1,5 @@
 from django.db import models
+from datetime import date
 
 class Vozac(models.Model):
     ime = models.CharField(max_length=100)
@@ -47,6 +48,12 @@ class Vozilo(models.Model):
 
     def __str__(self):
         return f"{self.ime} ({self.vozac.ime if self.vozac else 'bez vozača'})"
+    
+    def registracija_blizu(self):
+        return 0 <= (self.vrijeme_registracije - date.today()).days <= 14
+
+    def servis_blizu(self):
+        return 0 <= (self.servis - date.today()).days <= 14
 
 class Naputak(models.Model):
     vozilo = models.ForeignKey('Vozilo', on_delete=models.CASCADE, related_name='naputci')

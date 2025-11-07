@@ -6,6 +6,7 @@ from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm
 def homepage(request):
 
     ture = Tura.objects.filter(aktivan=True).order_by('datum_polaska')
+    
 
     # Ukupne vrijednosti
     total_km = ture.aggregate(Sum('kilometraza'))['kilometraza__sum'] or 0
@@ -18,6 +19,14 @@ def homepage(request):
 
     # Prenos u sljedeći mjesec 
     prenos = total_razlika - total_dnevnice - total_cekanje
+    
+    vozila = Vozilo.objects.all()
+    upozorenja = []
+    for v in vozila:
+        if v.registracija_blizu():
+            upozorenja.append(f"⚠️ Vozilu {v.ime} ističe registracija {v.vrijeme_registracije.strftime('%d.%m.%Y')}.")
+        if v.servis_blizu():
+            upozorenja.append(f"🔧 Vozilo {v.ime} ima servis {v.servis.strftime('%d.%m.%Y')}.")
 
     return render(request, 'homepage.html', {
         'ture': ture,
@@ -29,6 +38,7 @@ def homepage(request):
         'total_dnevnice': total_dnevnice,
         'total_cekanje': total_cekanje,
         'prenos': prenos,
+        'upozorenja': upozorenja,
     })
 
 def unos_ture(request):
