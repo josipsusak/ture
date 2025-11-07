@@ -137,3 +137,16 @@ def zavrsi_turu(request, tura_id):
     tura.aktivan = False
     tura.save()
     return redirect('unos_ture')  # Vrati korisnika na popis aktivnih tura
+
+def profil_ture(request, tura_id):
+    tura = get_object_or_404(Tura, id=tura_id)
+    
+    if request.method == 'POST':
+        form = TuraForm(request.POST, instance=tura)
+        if form.is_valid():
+            form.save()
+            return redirect('profil_ture', tura_id=tura.id) # type: ignore
+    else:
+        form = TuraForm(instance=tura)
+
+    return render(request, 'profil_ture.html', {'tura': tura, 'form': form})
