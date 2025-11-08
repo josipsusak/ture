@@ -24,11 +24,30 @@
     </div>
 {% endif %}
 <p>
-    <a href="{% url 'popis_vozaca' %}">Popis vozača</a> | 
-    <a href="{% url 'unos_ture' %}">Dodaj turu</a> | 
-    <a href="{% url 'popis_vozila' %}">Popis vozila</a>
+    <a href="{% url 'popis_vozaca' %}">Popis vozača</a> |  
+    <a href="{% url 'popis_vozila' %}">Popis vozila</a> |
+    <a href="{% url 'unos_ture' %}">Dodaj turu</a>
 </p>
     <h2>Popis svih tura</h2>
+
+    <form method="get" style="margin-bottom:20px;">
+        <label for="mjesec">Filtriraj po mjesecu:</label>
+        <select name="mjesec" id="mjesec">
+            <option value="">-- Aktivne ture --</option>
+            {% for m in svi_mjeseci %}
+                <option value="{{ m }}" {% if odabrani_mjesec == m %}selected{% endif %}>
+                    {{ m }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label for="godina">Godina:</label>
+        <input type="number" name="godina" id="godina" value="{{ odabrana_godina|default:trenutna_godina }}" style="width:80px;">
+
+        <button type="submit">Filtriraj</button>
+        <a href="?mjesec=&godina={{ trenutna_godina }}" style="margin-left:10px;">Poništi</a>
+    </form>
+
     <table>
         <tr>
             <th>Vozač</th>

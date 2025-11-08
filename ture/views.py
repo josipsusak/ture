@@ -1,12 +1,22 @@
+from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum
 from .models import Tura, Vozac, Vozilo, Naputak
 from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm
 
-def homepage(request):
 
-    ture = Tura.objects.filter(aktivan=True).order_by('datum_polaska')
-    
+def homepage(request):
+    mjesec = request.GET.get('mjesec')
+    godina = request.GET.get('godina')
+
+    if mjesec and godina:
+        ture = Tura.objects.filter(
+            aktivan=True,
+            datum_polaska__month=int(mjesec),
+            datum_polaska__year=int(godina)
+        ).order_by('datum_polaska')
+    else:
+        ture = Tura.objects.filter(aktivan=True).order_by('datum_polaska')
 
     # Ukupne vrijednosti
     total_km = ture.aggregate(Sum('kilometraza'))['kilometraza__sum'] or 0
@@ -16,9 +26,9 @@ def homepage(request):
     total_iznos = ture.aggregate(Sum('iznos_ture'))['iznos_ture__sum'] or 0
     total_dnevnice = ture.aggregate(Sum('dnevnice'))['dnevnice__sum'] or 0
     total_cekanje = ture.aggregate(Sum('cekanje'))['cekanje__sum'] or 0
-
-    # Prenos u sljedeći mjesec 
-    prenos = total_razlika - total_dnevnice - total_cekanje
+    
+    svi_mjeseci = range(1, 13)
+    trenutna_godina = datetime.now().year
     
     vozila = Vozilo.objects.all()
     upozorenja = []
@@ -37,8 +47,11 @@ def homepage(request):
         'total_iznos': total_iznos,
         'total_dnevnice': total_dnevnice,
         'total_cekanje': total_cekanje,
-        'prenos': prenos,
         'upozorenja': upozorenja,
+        'svi_mjeseci': svi_mjeseci,
+        'trenutna_godina': trenutna_godina,
+        'odabrani_mjesec':int(mjesec) if mjesec else None,
+        'odabrana_godina': int(godina) if godina else None,
     })
 
 def unos_ture(request):
@@ -91,8 +104,20 @@ def unos_vozaca(request):
 
 def profil_vozaca(request, vozac_id):
     vozac = get_object_or_404(Vozac, id=vozac_id)
-    ture = Tura.objects.filter(vozac=vozac).order_by('datum_polaska')
     
+    
+    mjesec = request.GET.get('mjesec')
+    godina = request.GET.get('godina')
+    
+    if mjesec and godina:
+        ture = Tura.objects.filter(
+            vozac=vozac,
+            datum_dolaska__month=int(mjesec),
+            datum_dolaska__year=int(godina)
+            ).order_by('datum_polaska')
+    else:
+        ture = Tura.objects.filter(vozac=vozac).order_by('datum_polaska')
+        
     if request.method == 'POST':
         form = VozacUpdateForm(request.POST, instance=vozac)
         if form.is_valid():
@@ -116,6 +141,9 @@ def profil_vozaca(request, vozac_id):
 
     # Prenos i bilanca
     bilanca = round(( total_razlika - total_dnevnice - total_cekanje + vozac.zaduzenje_prethodni_mjesec + vozac.uplaceno_na_banku),2)
+    
+    svi_mjeseci = range(1, 13)
+    trenutna_godina = datetime.now().year
 
     return render(request, 'profil_vozaca.html', {
         'vozac': vozac,
@@ -129,6 +157,10 @@ def profil_vozaca(request, vozac_id):
         'total_cekanje': total_cekanje,
         'bilanca': bilanca,
         'form': form,
+        'svi_mjeseci': svi_mjeseci,
+        'trenutna_godina': trenutna_godina,
+        'odabrani_mjesec': int(mjesec) if mjesec else None,
+        'odabrana_godina': int(godina) if godina else None,
     })
     
 def dodavanje_vozaca(request):

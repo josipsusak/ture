@@ -11,6 +11,13 @@
     </style>
 </head>
 <body>
+
+<p>
+    <a href="{% url 'homepage' %}">Početna</a> |
+    <a href="{% url 'uredi_vozilo' vozilo.id %}">Uredi vozilo</a> |
+    <a href="{% url 'popis_vozila' %}">Nazad na popis</a>
+</p>
+
 <h2>Detalji o vozilu: {{ vozilo.ime }}</h2>
 
 <p><strong>Vozač:</strong>
@@ -43,11 +50,6 @@
     {{ form.as_p }}
     <button type="submit">Spremi naputak</button>
 </form>
-
-<p>
-    <a href="{% url 'uredi_vozilo' vozilo.id %}">Uredi vozilo</a> |
-    <a href="{% url 'popis_vozila' %}">Nazad na popis</a>
-</p>
 
 </body>
 </html>
