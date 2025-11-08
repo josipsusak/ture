@@ -14,30 +14,38 @@
     </style>
 </head>
 <body>
-<p><a href="{% url 'homepage' %}">Početna</a></p>
-<h2>Profil ture</h2>
+    {% if messages %}
+        <div style="background-color:#d4edda; color:#155724; padding:10px; border-radius:5px; margin-bottom:15px;">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <p><a href="{% url 'homepage' %}">Početna</a></p>
+    <h2>Profil Ture - {{ tura.relacija }}</h2>
 
-<table>
-    <tr><th>Vozač</th><td>{{ tura.vozac.ime }}</td></tr>
-    <tr><th>Relacija</th><td>{{ tura.relacija }}</td></tr>
-    <tr><th>Datum polaska</th><td>{{ tura.datum_polaska }}</td></tr>
-    <tr><th>Datum dolaska</th><td>{{ tura.datum_dolaska }}</td></tr>
-    <tr><th>Kilometraža</th><td>{{ tura.kilometraza }}</td></tr>
-    <tr><th>Zaduženje</th><td>{{ tura.zaduzenje }}</td></tr>
-    <tr><th>Razduženje</th><td>{{ tura.razduzenje }}</td></tr>
-    <tr><th>Razlika</th><td>{{ tura.razlika }}</td></tr>
-    <tr><th>Iznos ture</th><td>{{ tura.iznos_ture }}</td></tr>
-    <tr><th>Dnevnice</th><td>{{ tura.dnevnice }}</td></tr>
-    <tr><th>Čekanje</th><td>{{ tura.cekanje }}</td></tr>
-    <tr><th>Status</th><td>{% if tura.aktivan %}Aktivna{% else %}Završena{% endif %}</td></tr>
-</table>
+    <table>
+        <tr><th>Vozač</th><td>{{ tura.vozac.ime }}</td></tr>
+        <tr><th>Relacija</th><td>{{ tura.relacija }}</td></tr>
+        <tr><th>Datum polaska</th><td>{{ tura.datum_polaska }}</td></tr>
+        <tr><th>Datum dolaska</th><td>{{ tura.datum_dolaska }}</td></tr>
+        <tr><th>Kilometraža</th><td>{{ tura.kilometraza }}</td></tr>
+        <tr><th>Zaduženje</th><td>{{ tura.zaduzenje }}</td></tr>
+        <tr><th>Razduženje</th><td>{{ tura.razduzenje }}</td></tr>
+        <tr><th>Razlika</th><td>{{ tura.razlika }}</td></tr>
+        <tr><th>Iznos ture</th><td>{{ tura.iznos_ture }}</td></tr>
+        <tr><th>Dnevnice</th><td>{{ tura.dnevnice }}</td></tr>
+        <tr><th>Čekanje</th><td>{{ tura.cekanje }}</td></tr>
+        <tr><th>Status</th><td>{% if tura.aktivan %}Aktivna{% else %}Završena{% endif %}</td></tr>
+    </table>
 
-<h3>Uredi turu</h3>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn">Spremi promjene</button>
-</form>
+    <h3>Uredi turu</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn">Spremi promjene</button>
+    </form>
 
 </body>
 </html>

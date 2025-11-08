@@ -13,13 +13,20 @@
     </style>
 </head>
 <body>
-<p><a href="{% url 'homepage' %}">Početna</a></p>
-    <h2>Unos nove ture</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Spremi</button>
-    </form>
+    {% if messages %}
+        <div style="background-color:#d4edda; color:#155724; padding:10px; border-radius:5px; margin-bottom:15px;">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </div>
+    {% endif %}
+    <p><a href="{% url 'homepage' %}">Početna</a></p>
+        <h2>Unos nove ture</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Spremi</button>
+        </form>
 
 </body>
 </html>

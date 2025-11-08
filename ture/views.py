@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum
+from django.contrib import messages
 from .models import Tura, Vozac, Vozilo, Naputak
 from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm
 
@@ -59,6 +60,7 @@ def unos_ture(request):
         form = TuraForm(request.POST)
         if form.is_valid():
             form.save()
+            messages.success(request, "✅ Tura uspješno dodana.")
             return redirect('unos_ture')
     else:
         form = TuraForm()
@@ -122,6 +124,7 @@ def profil_vozaca(request, vozac_id):
         form = VozacUpdateForm(request.POST, instance=vozac)
         if form.is_valid():
             form.save()
+            messages.success(request, "✅ Izmjene su uspješno spremljene.")
             for tura in ture:
                 if tura.iznos_ture:
                     tura.dnevnice = round(tura.iznos_ture * vozac.postotak , 2)
@@ -187,6 +190,7 @@ def profil_ture(request, tura_id):
         form = TuraForm(request.POST, instance=tura)
         if form.is_valid():
             form.save()
+            messages.success(request, "✅ Izmjene su uspješno spremljene.")
             return redirect('profil_ture', tura_id=tura.id) # type: ignore
     else:
         form = TuraForm(instance=tura)
