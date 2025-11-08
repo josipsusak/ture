@@ -9,15 +9,18 @@ from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm
 def homepage(request):
     mjesec = request.GET.get('mjesec')
     godina = request.GET.get('godina')
+    status = request.GET.get('status', 'aktivne')  # po defaultu aktivne
+    # Odredi aktivan status prema odabiru
+    aktivan_filter = True if status == 'aktivne' else False
 
     if mjesec and godina:
         ture = Tura.objects.filter(
-            aktivan=True,
+            aktivan=aktivan_filter,
             datum_polaska__month=int(mjesec),
             datum_polaska__year=int(godina)
         ).order_by('datum_polaska')
     else:
-        ture = Tura.objects.filter(aktivan=True).order_by('datum_polaska')
+        ture = Tura.objects.filter(aktivan=aktivan_filter).order_by('datum_polaska')
 
     # Ukupne vrijednosti
     total_km = ture.aggregate(Sum('kilometraza'))['kilometraza__sum'] or 0
@@ -53,6 +56,7 @@ def homepage(request):
         'trenutna_godina': trenutna_godina,
         'odabrani_mjesec':int(mjesec) if mjesec else None,
         'odabrana_godina': int(godina) if godina else None,
+        'odabrani_status': status,
     })
 
 def unos_ture(request):
@@ -181,7 +185,7 @@ def zavrsi_turu(request, tura_id):
     tura = get_object_or_404(Tura, id=tura_id)
     tura.aktivan = False
     tura.save()
-    return redirect('unos_ture')  # Vrati korisnika na popis aktivnih tura
+    return redirect('homepage')  # Vrati korisnika na popis aktivnih tura
 
 def profil_ture(request, tura_id):
     tura = get_object_or_404(Tura, id=tura_id)
