@@ -45,6 +45,9 @@
 
 
     <h3>Ture vozača</h3>
+
+    <a href="{% url 'export_vozac_pdf' vozac.id %}" class="btn btn-danger" style="margin-bottom: 15px;">📄 Eksport u PDF</a>
+
     {% if ture %}
         <table border="1" cellpadding="5">
             <tr>
@@ -62,8 +65,8 @@
             {% for tura in ture %}
             <tr>
                 <td>{{ tura.relacija }}</td>
-                <td>{{ tura.datum_polaska }}</td>
-                <td>{{ tura.datum_dolaska }}</td>
+                <td>{{ tura.datum_polaska|date:"d.m.Y" }}</td>
+                <td>{{ tura.datum_dolaska|date:"d.m.Y" }}</td>
                 <td>{{ tura.kilometraza }}</td>
                 <td>{{ tura.zaduzenje }}</td>
                 <td>{{ tura.razduzenje }}</td>

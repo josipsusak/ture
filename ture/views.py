@@ -1,7 +1,17 @@
+import os
 from datetime import datetime
+from urllib import response
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum
 from django.contrib import messages
+from django.http import HttpResponse
+from django.conf import settings
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 from .models import Tura, Vozac, Vozilo, Naputak
 from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm
 
@@ -277,3 +287,100 @@ def obrisi_naputak(request, naputak_id):
         return redirect('detalji_vozila', vozilo_id=vozilo.id)# type: ignore
 
     return render(request, 'obrisi_naputak.html', {'naputak': naputak, 'vozilo': vozilo})
+
+
+def export_vozac_pdf(request, vozac_id):
+    vozac = Vozac.objects.get(id=vozac_id)
+    ture = Tura.objects.filter(vozac=vozac).order_by('datum_polaska')
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="profil_{vozac.ime}.pdf"'
+
+    # Registriraj font koji podržava hrvatske znakove
+    font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Arial.ttf')
+    pdfmetrics.registerFont(TTFont('Arial', font_path))
+
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)# type: ignore
+    elements = []
+
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='TableFont', fontName='Arial', fontSize=9, leading=12))
+    styles.add(ParagraphStyle(name='TitleFont', fontName='Arial', fontSize=16, leading=20))
+
+    # Naslov
+    naziv_mjeseca = datetime.now().month
+    elements.append(Paragraph(f"{vozac.ime} za {naziv_mjeseca}. mjesec", styles['TitleFont']))
+    elements.append(Spacer(1, 12))
+
+    # Zaglavlje glavne tablice
+    headers = ["Relacija", "Datum polaska", "Datum dolaska", "Prijeđeni km",
+               "Zaduženje", "Razduženje", "Razlika", "Iznos ture",
+               "Dnevnice", "Čekanje"]
+    data = [headers]
+
+    # Redovi tura
+    for t in ture:
+        row = [
+            Paragraph(t.relacija or "", styles['TableFont']),
+            Paragraph(t.datum_polaska.strftime('%d.%m.%Y') if t.datum_polaska else "", styles['TableFont']),
+            Paragraph(t.datum_dolaska.strftime('%d.%m.%Y') if t.datum_dolaska else "", styles['TableFont']),
+            Paragraph(str(t.kilometraza) if t.kilometraza is not None else "", styles['TableFont']),
+            Paragraph(str(t.zaduzenje) if t.zaduzenje is not None else "", styles['TableFont']),
+            Paragraph(str(t.razduzenje) if t.razduzenje is not None else "", styles['TableFont']),
+            Paragraph(str(t.razlika) if t.razlika is not None else "", styles['TableFont']),
+            Paragraph(str(t.iznos_ture) if t.iznos_ture is not None else "", styles['TableFont']),
+            Paragraph(str(t.dnevnice) if t.dnevnice is not None else "", styles['TableFont']),
+            Paragraph(str(t.cekanje) if t.cekanje is not None else "", styles['TableFont']),
+        ]
+        data.append(row)# type: ignore
+
+    # Ukupni red
+    data.append([
+        "", "", "",
+        Paragraph(str(sum([t.kilometraza or 0 for t in ture])), styles['TableFont']),
+        Paragraph(str(sum([t.zaduzenje or 0 for t in ture])), styles['TableFont']),
+        Paragraph(str(sum([t.razduzenje or 0 for t in ture])), styles['TableFont']),
+        Paragraph(str(sum([t.razlika or 0 for t in ture])), styles['TableFont']),
+        Paragraph(str(sum([t.iznos_ture or 0 for t in ture])), styles['TableFont']),
+        Paragraph(str(sum([t.dnevnice or 0 for t in ture])), styles['TableFont']),
+        Paragraph(str(sum([t.cekanje or 0 for t in ture])), styles['TableFont']),
+    ])# type: ignore
+
+    table = Table(data, repeatRows=1, colWidths=[150, 80, 80, 70, 70, 70, 70, 60, 60, 60])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('ALIGN', (3,1), (-1,-1), 'RIGHT'),
+        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTSIZE', (0,0), (-1,-1), 9),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+    ]))
+    elements.append(table)
+    elements.append(Spacer(1, 12))
+    
+    col_widths_main = [150,70,70,60,60,60,60,60,60,60]
+    x_start_last_col = sum(col_widths_main[:-1])  # počinje zadnja kolona
+
+    # Tablica "Ukupno" (bilanca)
+    bilanca = round((sum([t.razlika or 0 for t in ture]) -
+                     sum([t.dnevnice or 0 for t in ture]) -
+                     sum([t.cekanje or 0 for t in ture]) +
+                     vozac.zaduzenje_prethodni_mjesec +
+                     vozac.uplaceno_na_banku), 2)
+
+    ukupno_data = [[Paragraph("Ukupno:", styles['TableFont']), Paragraph(str(bilanca) + " " + "KM", styles['TableFont'])]]
+    ukupno_table = Table(ukupno_data, colWidths=[60, 60], hAlign='RIGHT')
+    ukupno_table.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'RIGHT'),   # oba elementa desno unutar svojih ćelija
+        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('BACKGROUND', (0,0), (-1,-1), colors.lightgrey),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+    ]))
+    elements.append(Spacer(100, 6))
+    elements.append(ukupno_table)
+
+    doc.build(elements)
+    return response
+
