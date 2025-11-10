@@ -7,18 +7,18 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.conf import settings
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape # type: ignore
+from reportlab.pdfbase import pdfmetrics# type: ignore
+from reportlab.pdfbase.ttfonts import TTFont# type: ignore
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer# type: ignore
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle# type: ignore
+from reportlab.lib import colors# type: ignore
 from .models import Tura, Vozac, Vozilo, Naputak
 from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('homepage')  # ili neka početna stranica
+        return redirect('homepage') 
 
     if request.method == 'POST':
         username = request.POST.get('username')
