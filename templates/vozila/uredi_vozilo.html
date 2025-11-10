@@ -1,13 +1,30 @@
-<!DOCTYPE html>
-<html>
-<head><title>Uredi vozilo</title></head>
-<body>
-<h2>Uredi vozilo: {{ vozilo.ime }}</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Spremi promjene</button>
-</form>
-<p><a href="{% url 'detalji_vozila' vozilo.id %}">Odustani</a></p>
-</body>
-</html>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Uredi vozilo - {{ vozilo.ime }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Navigacija -->
+    <div class="mb-3">
+        <a href="{% url 'detalji_vozila' vozilo.id %}" class="btn btn-outline-secondary btn-sm me-2">🔙 Odustani</a>
+        <a href="{% url 'popis_vozila' %}" class="btn btn-outline-primary btn-sm">📋 Popis vozila</a>
+    </div>
+
+    <!-- Forma za uređivanje vozila -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            Uredi vozilo: {{ vozilo.ime }}
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-success mt-2">💾 Spremi promjene</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

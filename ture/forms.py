@@ -30,6 +30,7 @@ class TuraForm(forms.ModelForm):
         widgets = {
             'datum_polaska': forms.DateInput(attrs={'type': 'date'}),
             'datum_dolaska': forms.DateInput(attrs={'type': 'date'}),
+            'relacija': forms.Textarea(attrs={'rows': 2, 'cols': 80}),
         }
         labels = {
             'vozac': 'Vozač',

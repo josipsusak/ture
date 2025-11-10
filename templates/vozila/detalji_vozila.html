@@ -1,55 +1,73 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Detalji vozila</title>
-    <style>
-        body { font-family: Arial; margin: 40px; }
-        textarea { width: 100%; height: 80px; }
-        input[type=text] { width: 100%; }
-        form { margin-top: 20px; }
-        .naputak { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-<p>
-    <a href="{% url 'homepage' %}">Početna</a> |
-    <a href="{% url 'uredi_vozilo' vozilo.id %}">Uredi vozilo</a> |
-    <a href="{% url 'popis_vozila' %}">Nazad na popis</a>
-</p>
+{% block title %}Detalji vozila - {{ vozilo.ime }}{% endblock %}
 
-<h2>Detalji o vozilu: {{ vozilo.ime }}</h2>
+{% block content %}
+<div class="container mt-4">
 
-<p><strong>Vozač:</strong>
-{% if vozilo.vozac %}
-    <a href="{% url 'profil_vozaca' vozilo.vozac.id %}">{{ vozilo.vozac.ime }}</a>
-{% else %}
-    (nema vozača)
-{% endif %}
-</p>
+    <!-- Navigacija -->
+    <div class="mb-3">
+        <a href="{% url 'homepage' %}" class="btn btn-outline-primary btn-sm me-2">🏠 Početna</a>
+        <a href="{% url 'uredi_vozilo' vozilo.id %}" class="btn btn-outline-warning btn-sm me-2">✏️ Uredi vozilo</a>
+        <a href="{% url 'popis_vozila' %}" class="btn btn-outline-secondary btn-sm">Nazad na popis</a>
+    </div>
 
-<p><strong>Vrijeme registracije:</strong> {{ vozilo.vrijeme_registracije }}</p>
-<p><strong>Servis:</strong> {{ vozilo.servis }}</p>
+    <!-- Podaci o vozilu -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            Detalji vozila: {{ vozilo.ime }}
+        </div>
+        <div class="card-body">
+            <p><strong>Vozač:</strong>
+                {% if vozilo.vozac %}
+                    <a href="{% url 'profil_vozaca' vozilo.vozac.id %}">{{ vozilo.vozac.ime }}</a>
+                {% else %}
+                    (nema vozača)
+                {% endif %}
+            </p>
+            <p><strong>Vrijeme registracije:</strong> {{ vozilo.vrijeme_registracije }}</p>
+            <p><strong>Servis:</strong> {{ vozilo.servis }}</p>
+        </div>
+    </div>
 
-<h3>Naputci</h3>
-<ul>
-    {% for n in naputci %}
-        <li>
-            {{ n.datum|date:"d.m.Y H:i" }} — {{ n.sadrzaj }}
-            <a href="{% url 'uredi_naputak' n.id %}">✏️</a>
-            <a href="{% url 'obrisi_naputak' n.id %}">🗑️</a>
-        </li>
-    {% empty %}
-        <li>Nema naputaka.</li>
-    {% endfor %}
-</ul>
+    <!-- Naputci -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <strong>Naputci</strong>
+        </div>
+        <div class="card-body">
+            {% if naputci %}
+                <ul class="list-group">
+                    {% for n in naputci %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ n.datum|date:"d.m.Y H:i" }} — {{ n.sadrzaj }}</span>
+                            <span>
+                                <a href="{% url 'uredi_naputak' n.id %}" class="btn btn-sm btn-outline-warning me-1">✏️</a>
+                                <a href="{% url 'obrisi_naputak' n.id %}" class="btn btn-sm btn-outline-danger">🗑️</a>
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Nema naputaka.</p>
+            {% endif %}
+        </div>
+    </div>
 
-<h3>Dodaj novi naputak</h3>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Spremi naputak</button>
-</form>
+    <!-- Dodaj novi naputak -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <strong>Dodaj novi naputak</strong>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-success mt-2">💾 Spremi naputak</button>
+            </form>
+        </div>
+    </div>
 
-</body>
-</html>
+</div>
+{% endblock %}

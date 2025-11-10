@@ -1,101 +1,145 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Profil vozača - {{ vozac.ime }}</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profil vozača - {{ vozac.ime }}{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
 
     {% if messages %}
-        <div style="background-color:#d4edda; color:#155724; padding:10px; border-radius:5px; margin-bottom:15px;">
-            {% for message in messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ message }}
-            {% endfor %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Zatvori"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="mb-3">
+        <a href="{% url 'homepage' %}" class="btn btn-outline-primary btn-sm me-2">🏠 Početna</a>
+        <a href="{% url 'popis_vozaca' %}" class="btn btn-outline-secondary btn-sm">← Povratak na popis vozača</a>
+    </div>
+
+    <h2 class="mb-4 text-center">Profil vozača: {{ vozac.ime }}</h2>
+
+    <!-- Financije -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Financije</h5>
         </div>
-    {% endif %}
+        <div class="card-body">
+            <form method="post" class="mb-3">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.as_p }}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">💾 Spremi promjene</button>
+            </form>
+        </div>
+    </div>
 
-    <p><a href="{% url 'homepage' %}"> Početna </a> | <a href="{% url 'popis_vozaca' %}"> Povratak na popis vozača </a></p>
+    <!-- Filtriranje tura -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">Filtriranje tura</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="mjesec" class="form-label">Mjesec</label>
+                    <select name="mjesec" id="mjesec" class="form-select">
+                        <option value="">-- Sve ture --</option>
+                        {% for m in svi_mjeseci %}
+                            <option value="{{ m }}" {% if odabrani_mjesec == m %}selected{% endif %}>
+                                {{ m }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-    <h1>Profil vozača: {{ vozac.ime }}</h1>
+                <div class="col-md-3">
+                    <label for="godina" class="form-label">Godina</label>
+                    <input type="number" name="godina" id="godina"
+                           value="{{ odabrana_godina|default:trenutna_godina }}"
+                           class="form-control">
+                </div>
 
-    <h3>Financije</h3>
+                <div class="col-md-5 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">🔍 Prikaži</button>
+                    <a href="?mjesec=&godina={{ trenutna_godina }}" class="btn btn-outline-secondary">Poništi</a>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <form method="post" style="margin-bottom: 20px;">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Spremi promjene</button>
-    </form>
+    <!-- Ture vozača -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Ture vozača</h5>
+            <a href="{% url 'export_vozac_pdf' vozac.id %}" class="btn btn-danger btn-sm">📄 Eksport u PDF</a>
+        </div>
 
-    <form method="get" style="margin-bottom:20px;">
-        <label for="mjesec">Odaberi mjesec:</label>
-        <select name="mjesec" id="mjesec">
-            <option value="">-- Sve ture --</option>
-            {% for m in svi_mjeseci %}
-                <option value="{{ m }}" {% if odabrani_mjesec == m %}selected{% endif %}>
-                    {{ m }}
-                </option>
-            {% endfor %}
-        </select>
+        <div class="card-body table-responsive">
+            {% if ture %}
+                <table class="table table-striped table-bordered align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Relacija</th>
+                            <th>Datum polaska</th>
+                            <th>Datum dolaska</th>
+                            <th>Kilometri</th>
+                            <th>Zaduženje</th>
+                            <th>Razduženje</th>
+                            <th>Razlika</th>
+                            <th>Iznos ture</th>
+                            <th>Dnevnice</th>
+                            <th>Čekanje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tura in ture %}
+                        <tr>
+                            <td>{{ tura.relacija }}</td>
+                            <td>{{ tura.datum_polaska|date:"d.m.Y" }}</td>
+                            <td>{{ tura.datum_dolaska|date:"d.m.Y" }}</td>
+                            <td>{{ tura.kilometraza }}</td>
+                            <td>{{ tura.zaduzenje }}</td>
+                            <td>{{ tura.razduzenje }}</td>
+                            <td>{{ tura.razlika }}</td>
+                            <td>{{ tura.iznos_ture }}</td>
+                            <td>{{ tura.dnevnice }}</td>
+                            <td>{{ tura.cekanje }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="fw-bold">
+                        <tr>
+                            <td colspan="3" class="text-end">Ukupno:</td>
+                            <td>{{ total_km }}</td>
+                            <td>{{ total_zaduz }}</td>
+                            <td>{{ total_razduz }}</td>
+                            <td>{{ total_razlika }}</td>
+                            <td>{{ total_iznos }}</td>
+                            <td>{{ total_dnevnice }}</td>
+                            <td>{{ total_cekanje }}</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td colspan="9" class="text-end">Ukupno:</td>
+                            <td>{{ bilanca }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            {% else %}
+                <div class="alert alert-warning mb-0">
+                    Ovaj vozač još nema unešenih tura.
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
-        <label for="godina">Godina:</label>
-        <input type="number" name="godina" id="godina" value="{{ odabrana_godina|default:trenutna_godina }}" style="width:80px;">
+</div>
 
-        <button type="submit">Prikaži</button>
-        <a href="?mjesec=&godina={{ trenutna_godina }}" style="margin-left:10px;">Poništi</a>
-    </form>
-
-
-    <h3>Ture vozača</h3>
-
-    <a href="{% url 'export_vozac_pdf' vozac.id %}" class="btn btn-danger" style="margin-bottom: 15px;">📄 Eksport u PDF</a>
-
-    {% if ture %}
-        <table border="1" cellpadding="5">
-            <tr>
-                <th>Relacija</th>
-                <th>Datum polaska</th>
-                <th>Datum dolaska</th>
-                <th>Kilometri</th>
-                <th>Zaduženje</th>
-                <th>Razduženje</th>
-                <th>Razlika</th>
-                <th>Iznos ture</th>
-                <th>Dnevnice</th>
-                <th>Čekanje</th>
-            </tr>
-            {% for tura in ture %}
-            <tr>
-                <td>{{ tura.relacija }}</td>
-                <td>{{ tura.datum_polaska|date:"d.m.Y" }}</td>
-                <td>{{ tura.datum_dolaska|date:"d.m.Y" }}</td>
-                <td>{{ tura.kilometraza }}</td>
-                <td>{{ tura.zaduzenje }}</td>
-                <td>{{ tura.razduzenje }}</td>
-                <td>{{ tura.razlika }}</td>
-                <td>{{ tura.iznos_ture }}</td>
-                <td>{{ tura.dnevnice }}</td>
-                <td>{{ tura.cekanje }}</td>
-            </tr>
-            {% endfor %}
-            <tr>
-                <th colspan="3"></th>
-                <th>{{ total_km }}</th>
-                <th>{{ total_zaduz }}</th>
-                <th>{{ total_razduz }}</th>
-                <th>{{ total_razlika }}</th>
-                <th>{{ total_iznos }}</th>
-                <th>{{ total_dnevnice }}</th>
-                <th>{{ total_cekanje }}</th>
-            </tr>
-        </table>
-        <table border="1" cellpadding="5">
-            <tr>
-                <th colspan="3">Ukupno:</th>
-                <th>{{ bilanca }}</th>
-            </tr>
-        </table>
-    {% else %}
-        <p>Ovaj vozač još nema unešenih tura.</p>
-    {% endif %}
-
-</body>
-</html>
+{% endblock %}

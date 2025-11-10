@@ -1,51 +1,74 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Profil Ture - {{ tura.relacija }}</title>
-    <style>
-        body { font-family: Arial; margin: 40px; }
-        table { border-collapse: collapse; width: 60%; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background: #f2f2f2; width: 30%; }
-        .btn { background: #4CAF50; color: white; padding: 8px 16px; border: none; cursor: pointer; }
-        .btn:hover { background: #45a049; }
-        a { color: #007BFF; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profil Ture - {{ tura.relacija }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
     {% if messages %}
-        <div style="background-color:#d4edda; color:#155724; padding:10px; border-radius:5px; margin-bottom:15px;">
-            {% for message in messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ message }}
-            {% endfor %}
-        </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Zatvori"></button>
+            </div>
+        {% endfor %}
     {% endif %}
-    
-    <p><a href="{% url 'homepage' %}">Početna</a></p>
-    <h2>Profil Ture - {{ tura.relacija }}</h2>
 
-    <table>
-        <tr><th>Vozač</th><td>{{ tura.vozac.ime }}</td></tr>
-        <tr><th>Relacija</th><td>{{ tura.relacija }}</td></tr>
-        <tr><th>Datum polaska</th><td>{{ tura.datum_polaska }}</td></tr>
-        <tr><th>Datum dolaska</th><td>{{ tura.datum_dolaska }}</td></tr>
-        <tr><th>Kilometraža</th><td>{{ tura.kilometraza }}</td></tr>
-        <tr><th>Zaduženje</th><td>{{ tura.zaduzenje }}</td></tr>
-        <tr><th>Razduženje</th><td>{{ tura.razduzenje }}</td></tr>
-        <tr><th>Razlika</th><td>{{ tura.razlika }}</td></tr>
-        <tr><th>Iznos ture</th><td>{{ tura.iznos_ture }}</td></tr>
-        <tr><th>Dnevnice</th><td>{{ tura.dnevnice }}</td></tr>
-        <tr><th>Čekanje</th><td>{{ tura.cekanje }}</td></tr>
-        <tr><th>Status</th><td>{% if tura.aktivan %}Aktivna{% else %}Završena{% endif %}</td></tr>
-    </table>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'homepage' %}" class="btn btn-outline-primary btn-sm">🏠 Početna</a>
+        <h3 class="mb-0">Profil Ture – {{ tura.relacija }}</h3>
+    </div>
 
-    <h3>Uredi turu</h3>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn">Spremi promjene</button>
-    </form>
+    <!-- 🔹 Podaci o turi -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            Detalji ture
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered align-middle">
+                <tbody>
+                    <tr><th>Vozač</th><td>{{ tura.vozac.ime }}</td></tr>
+                    <tr><th>Relacija</th><td>{{ tura.relacija }}</td></tr>
+                    <tr><th>Datum polaska</th><td>{{ tura.datum_polaska }}</td></tr>
+                    <tr><th>Datum dolaska</th><td>{{ tura.datum_dolaska }}</td></tr>
+                    <tr><th>Kilometraža</th><td>{{ tura.kilometraza }}</td></tr>
+                    <tr><th>Zaduženje</th><td>{{ tura.zaduzenje }}</td></tr>
+                    <tr><th>Razduženje</th><td>{{ tura.razduzenje }}</td></tr>
+                    <tr><th>Razlika</th><td>{{ tura.razlika }}</td></tr>
+                    <tr><th>Iznos ture</th><td>{{ tura.iznos_ture }}</td></tr>
+                    <tr><th>Dnevnice</th><td>{{ tura.dnevnice }}</td></tr>
+                    <tr><th>Čekanje</th><td>{{ tura.cekanje }}</td></tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            {% if tura.aktivan %}
+                                <span class="badge bg-success">Aktivna</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Završena</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-</body>
-</html>
+    <!-- 🔹 Forma za uređivanje -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <strong>Uredi turu</strong>
+        </div>
+        <div class="card-body">
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success">💾 Spremi promjene</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

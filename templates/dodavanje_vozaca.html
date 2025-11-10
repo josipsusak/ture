@@ -1,17 +1,27 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dodaj vozača</title>
-</head>
-<body>
-    <h1>Dodavanje novog vozača</h1>
+{% extends "base.html" %}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Spremi vozača</button>
+{% block title %}Dodaj vozača{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-header bg-primary text-white">
+    <h4 class="mb-0">Dodavanje novog vozača</h4>
+  </div>
+  <div class="card-body">
+    <form method="post" class="needs-validation" novalidate>
+      {% csrf_token %}
+      {{ form.as_p }}
+
+      <div class="d-flex justify-content-between mt-3">
+        <a href="{% url 'popis_vozaca' %}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Povratak
+        </a>
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-save"></i> Spremi vozača
+        </button>
+      </div>
     </form>
+  </div>
+</div>
+{% endblock %}
 
-    <p><a href="{% url 'popis_vozaca' %}">← Povratak na popis vozača</a></p>
-</body>
-</html>

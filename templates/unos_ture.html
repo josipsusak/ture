@@ -1,32 +1,40 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Ture vozača</title>
-    <style>
-        body { font-family: Arial; margin: 40px; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-        th { background: #f2f2f2; }
-        form { margin-bottom: 40px; }
-        input, select { padding: 4px; }
-        .totals { margin-top: 20px; font-weight: bold; }
-    </style>
-</head>
-<body>
-    {% if messages %}
-        <div style="background-color:#d4edda; color:#155724; padding:10px; border-radius:5px; margin-bottom:15px;">
-            {% for message in messages %}
-                {{ message }}
-            {% endfor %}
-        </div>
-    {% endif %}
-    <p><a href="{% url 'homepage' %}">Početna</a></p>
-        <h2>Unos nove ture</h2>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Spremi</button>
-        </form>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}Unos nove ture{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Zatvori"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="mb-3">
+        <a href="{% url 'homepage' %}" class="btn btn-outline-primary btn-sm">🏠 Početna</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Unos nove ture</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success">💾 Spremi turu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

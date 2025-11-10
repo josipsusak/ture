@@ -1,0 +1,11 @@
+label {
+    display: inline-block;
+    width: 120px;  /* koliko želiš širine za naziv */
+    vertical-align: top;
+}
+
+textarea {
+    width: 400px;
+    height: 60px;
+    vertical-align: top;
+}

@@ -1,16 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Obriši naputak</title>
-</head>
-<body>
-    <h2>Brisanje naputka</h2>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Obriši naputak{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2 class="mb-3">Brisanje naputka</h2>
     <p>Jeste li sigurni da želite obrisati ovaj naputak?</p>
-    <blockquote>{{ naputak.sadrzaj }}</blockquote>
-    <form method="post">
+
+    <blockquote class="blockquote bg-light p-3 rounded">
+        {{ naputak.sadrzaj }}
+    </blockquote>
+
+    <form method="post" class="mt-3">
         {% csrf_token %}
-        <button type="submit" style="background:red; color:white;">Obriši</button>
-        <a href="{% url 'detalji_vozila' vozilo.id %}">Odustani</a>
+        <button type="submit" class="btn btn-danger me-2">Obriši</button>
+        <a href="{% url 'detalji_vozila' vozilo.id %}" class="btn btn-secondary">Odustani</a>
     </form>
-</body>
-</html>
+
+</div>
+{% endblock %}
