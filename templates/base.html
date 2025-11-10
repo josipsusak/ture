@@ -22,6 +22,9 @@
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}" href="{% url 'homepage' %}">Početna</a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'popis_vozaca' %}active{% endif %}" href="{% url 'popis_vozaca' %}">Vozači</a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'popis_vozila' %}active{% endif %}" href="{% url 'popis_vozila' %}">Vozila</a></li>
+        {% if request.user.is_authenticated %}
+          <li class="nav-item"><a class="btn btn-sm btn-danger" href="{% url 'logout' %}">Odjava</a></li>
+        {% endif %}
       </ul>
     </div>
   </div>
@@ -35,7 +38,7 @@
 
 <!-- 🔹 Footer -->
 <footer class="bg-primary text-white text-center py-3">
-    <small>© {{ now|date:"Y" }} Sustav za ture vozača</small>
+    <small>© {% now "Y" %} Sustav za ture vozača</small>
 </footer>
 
 </body>

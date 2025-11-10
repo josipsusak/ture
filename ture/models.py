@@ -54,6 +54,12 @@ class Vozilo(models.Model):
 
     def servis_blizu(self):
         return 0 <= (self.servis - date.today()).days <= 14
+    
+    def registracija_istekla(self):
+        return self.vrijeme_registracije < date.today()
+
+    def servis_istekao(self):
+        return self.servis < date.today()
 
 class Naputak(models.Model):
     vozilo = models.ForeignKey('Vozilo', on_delete=models.CASCADE, related_name='naputci')

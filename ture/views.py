@@ -1,9 +1,10 @@
 import os
 from datetime import datetime
-from urllib import response
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.conf import settings
 from reportlab.lib.pagesizes import A4, landscape
@@ -15,7 +16,27 @@ from reportlab.lib import colors
 from .models import Tura, Vozac, Vozilo, Naputak
 from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm
 
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('homepage')  # ili neka početna stranica
 
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('homepage')
+        else:
+            messages.error(request, 'Neispravno korisničko ime ili lozinka.')
+
+    return render(request, 'login.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+@login_required
 def homepage(request):
     mjesec = request.GET.get('mjesec')
     godina = request.GET.get('godina')
@@ -51,6 +72,12 @@ def homepage(request):
             upozorenja.append(f"⚠️ Vozilu {v.ime} ističe registracija {v.vrijeme_registracije.strftime('%d.%m.%Y')}.")
         if v.servis_blizu():
             upozorenja.append(f"🔧 Vozilo {v.ime} ima servis {v.servis.strftime('%d.%m.%Y')}.")
+        
+        # nove provjere za istekle datume
+        if v.registracija_istekla():
+            upozorenja.append(f"❌ Vozilu {v.ime} je istekla registracija {v.vrijeme_registracije.strftime('%d.%m.%Y')}!")
+        if v.servis_istekao():
+            upozorenja.append(f"❌ Vozilo {v.ime} je prošao servis {v.servis.strftime('%d.%m.%Y')}!")
 
     return render(request, 'homepage.html', {
         'ture': ture,
@@ -69,6 +96,7 @@ def homepage(request):
         'odabrani_status': status,
     })
 
+@login_required
 def unos_ture(request):
     if request.method == 'POST':
         form = TuraForm(request.POST)
@@ -106,6 +134,7 @@ def unos_ture(request):
         'prenos': prenos,
     })
 
+@login_required
 def unos_vozaca(request):
     if request.method == 'POST':
         form = VozacForm(request.POST)
@@ -118,6 +147,7 @@ def unos_vozaca(request):
     vozac = Vozac.objects.all()
     return render(request, 'popis_vozaca.html', {'form': form, 'vozaci': vozac})
 
+@login_required
 def profil_vozaca(request, vozac_id):
     vozac = get_object_or_404(Vozac, id=vozac_id)
     
@@ -179,7 +209,8 @@ def profil_vozaca(request, vozac_id):
         'odabrani_mjesec': int(mjesec) if mjesec else None,
         'odabrana_godina': int(godina) if godina else None,
     })
-    
+
+@login_required    
 def dodavanje_vozaca(request):
     if request.method == 'POST':
         form = VozacForm(request.POST)
@@ -191,12 +222,14 @@ def dodavanje_vozaca(request):
 
     return render(request, 'dodavanje_vozaca.html', {'form': form})
 
+@login_required
 def zavrsi_turu(request, tura_id):
     tura = get_object_or_404(Tura, id=tura_id)
     tura.aktivan = False
     tura.save()
     return redirect('homepage')  # Vrati korisnika na popis aktivnih tura
 
+@login_required
 def profil_ture(request, tura_id):
     tura = get_object_or_404(Tura, id=tura_id)
     
@@ -211,10 +244,12 @@ def profil_ture(request, tura_id):
 
     return render(request, 'profil_ture.html', {'tura': tura, 'form': form})
 
+@login_required
 def popis_vozila(request):
     vozila = Vozilo.objects.all().order_by('ime')
     return render(request, 'vozila/popis_vozila.html', {'vozila': vozila})
 
+@login_required
 def detalji_vozila(request, vozilo_id):
     vozilo = get_object_or_404(Vozilo, id=vozilo_id)
     naputci = vozilo.naputci.all().order_by('-datum') # type: ignore
@@ -235,6 +270,7 @@ def detalji_vozila(request, vozilo_id):
         'form': form,
     })
 
+@login_required
 def dodaj_vozilo(request):
     if request.method == 'POST':
         form = VoziloForm(request.POST)
@@ -245,6 +281,7 @@ def dodaj_vozilo(request):
         form = VoziloForm()
     return render(request, 'vozila/dodaj_vozilo.html', {'form': form})
 
+@login_required
 def uredi_vozilo(request, vozilo_id):
     vozilo = get_object_or_404(Vozilo, id=vozilo_id)
     if request.method == 'POST':
@@ -256,6 +293,7 @@ def uredi_vozilo(request, vozilo_id):
         form = VoziloForm(instance=vozilo)
     return render(request, 'vozila/uredi_vozilo.html', {'form': form, 'vozilo': vozilo})
 
+@login_required
 def obrisi_vozilo(request, vozilo_id):
     vozilo = get_object_or_404(Vozilo, id=vozilo_id)
     if request.method == 'POST':
@@ -263,6 +301,7 @@ def obrisi_vozilo(request, vozilo_id):
         return redirect('popis_vozila')
     return render(request, 'vozila/obrisi_vozilo.html', {'vozilo': vozilo})
 
+@login_required
 def uredi_naputak(request, naputak_id):
     naputak = get_object_or_404(Naputak, id=naputak_id)
     vozilo = naputak.vozilo
@@ -277,7 +316,7 @@ def uredi_naputak(request, naputak_id):
 
     return render(request, 'uredi_naputak.html', {'form': form, 'naputak': naputak, 'vozilo': vozilo})
 
-
+@login_required
 def obrisi_naputak(request, naputak_id):
     naputak = get_object_or_404(Naputak, id=naputak_id)
     vozilo = naputak.vozilo
@@ -288,7 +327,7 @@ def obrisi_naputak(request, naputak_id):
 
     return render(request, 'obrisi_naputak.html', {'naputak': naputak, 'vozilo': vozilo})
 
-
+@login_required
 def export_vozac_pdf(request, vozac_id):
     vozac = Vozac.objects.get(id=vozac_id)
     ture = Tura.objects.filter(vozac=vozac).order_by('datum_polaska')

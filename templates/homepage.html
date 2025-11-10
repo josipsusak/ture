@@ -81,8 +81,8 @@
             <tr>
                 <td><a href="{% url 'profil_vozaca' t.vozac.id %}" class="text-decoration-none">{{ t.vozac.ime }}</a></td>
                 <td><a href="{% url 'profil_ture' t.id %}" class="text-decoration-none">{{ t.relacija }}</a></td>
-                <td>{{ t.datum_polaska }}</td>
-                <td>{{ t.datum_dolaska }}</td>
+                <td>{{ t.datum_polaska|date:"d.m.Y" }}</td>
+                <td>{{ t.datum_dolaska|date:"d.m.Y" }}</td>
                 <td>{{ t.kilometraza }}</td>
                 <td>{{ t.zaduzenje }}</td>
                 <td>{{ t.razduzenje }}</td>
