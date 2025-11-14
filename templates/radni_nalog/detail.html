@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Dnevnica obračun</h3>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Tuzemne dnevnice</th>
+        <td>{{ radni_nalog.tuzemne_dnevnice }} €</td>
+    </tr>
+
+    <tr>
+        <th>Inozemne dnevnice</th>
+        <td>{{ radni_nalog.inozemne_dnevnice }} €</td>
+    </tr>
+
+    <tr>
+        <th>Konačna država</th>
+        <td>{{ radni_nalog.konacna_drzava }}</td>
+    </tr>
+
+    <tr>
+        <th>Vrijeme polaska</th>
+        <td>{{ radni_nalog.tura.datum_polaska }}</td>
+    </tr>
+
+    <tr>
+        <th>Vrijeme povratka</th>
+        <td>{{ radni_nalog.tura.datum_dolaska }}</td>
+    </tr>
+
+    <tr>
+        <th>Vrijeme polaska preko granice</th>
+        <td>{{ radni_nalog.tura.granica_polazak }}</td>
+    </tr>
+
+    <tr>
+        <th>Vrijeme povratka preko granice</th>
+        <td>{{ radni_nalog.tura.granica_povratak }}</td>
+    </tr>
+
+    <tr>
+        <th>Ukupno dnevnice</th>
+        <td>{{ radni_nalog.tuzemne_dnevnice|add:radni_nalog.inozemne_dnevnice }} €</td>
+    </tr>
+</table>
+
+{% endblock %}

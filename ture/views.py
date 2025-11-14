@@ -13,8 +13,8 @@ from reportlab.pdfbase.ttfonts import TTFont# type: ignore
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer# type: ignore
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle# type: ignore
 from reportlab.lib import colors# type: ignore
-from .models import Tura, Vozac, Vozilo, Naputak
-from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm
+from .models import Tura, Vozac, Vozilo, Naputak, RadniNalog, osvjezi_radni_nalog
+from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm, RadniNalogForm
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -183,7 +183,7 @@ def profil_vozaca(request, vozac_id):
     total_razduz = ture.aggregate(Sum('razduzenje'))['razduzenje__sum'] or 0
     total_razlika = ture.aggregate(Sum('razlika'))['razlika__sum'] or 0
     total_iznos = ture.aggregate(Sum('iznos_ture'))['iznos_ture__sum'] or 0
-    total_dnevnice = ture.aggregate(Sum('dnevnice'))['dnevnice__sum'] or 0
+    total_dnevnice = round(ture.aggregate(Sum('dnevnice'))['dnevnice__sum'] or 0, 2)
     total_cekanje = ture.aggregate(Sum('cekanje'))['cekanje__sum'] or 0
 
     # Prenos i bilanca
@@ -237,6 +237,7 @@ def profil_ture(request, tura_id):
         form = TuraForm(request.POST, instance=tura)
         if form.is_valid():
             form.save()
+            osvjezi_radni_nalog(tura=tura)
             messages.success(request, "✅ Izmjene su uspješno spremljene.")
             return redirect('profil_ture', tura_id=tura.id) # type: ignore
     else:
@@ -422,4 +423,23 @@ def export_vozac_pdf(request, vozac_id):
 
     doc.build(elements)
     return response
+
+@login_required
+def dodaj_radni_nalog(request):
+    if request.method == 'POST':
+        form = RadniNalogForm(request.POST)
+        if form.is_valid():
+            radni_nalog = form.save()
+            messages.success(request, "✅ Radni nalog uspješno kreiran.")
+            return redirect('radni_nalog_detail', radni_nalog_id=radni_nalog.id)
+    else:
+        form = RadniNalogForm()
+    return render(request, 'radni_nalog/dodaj.html', {'form': form})
+
+
+@login_required
+def radni_nalog_detail(request, radni_nalog_id):
+    radni_nalog = get_object_or_404(RadniNalog, id=radni_nalog_id)
+    return render(request, 'radni_nalog/detail.html', {'radni_nalog': radni_nalog})
+
 

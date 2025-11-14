@@ -19,4 +19,6 @@ urlpatterns = [
     path('naputak/<int:naputak_id>/uredi/', views.uredi_naputak, name='uredi_naputak'),
     path('naputak/<int:naputak_id>/obrisi/', views.obrisi_naputak, name='obrisi_naputak'),
     path('vozac/<int:vozac_id>/export-pdf/', views.export_vozac_pdf, name='export_vozac_pdf'),
+    path('radni_nalog/dodaj/', views.dodaj_radni_nalog, name='dodaj_radni_nalog'),
+    path('radni_nalog/<int:radni_nalog_id>/', views.radni_nalog_detail, name='radni_nalog_detail'),
 ]
