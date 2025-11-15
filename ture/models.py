@@ -100,25 +100,24 @@ class RadniNalog(models.Model):
     def izracun_dnevnica(self):
         t = self.tura
 
-        # Cijene po državama
-        cijene = {
-            'BiH': 12.5,
-            'Austrija': 90,
-            'Njemacka': 90,
-            'Slovenija': 80,
-            'Francuska': 90,
-            'Hrvatska': 50,
-            'Madjarska': 70,
-            'Svicarska': 90,
-            'Italija': 80,
+        # --- 1. Dohvati cijene iz baze (CijenaDnevnica) ---
+        cijene_dict = {c.drzava: c.iznos for c in CijenaDnevnica.objects.all()}
+        
+        # Fallback ako nema cijena u bazi (npr. prvo pokretanje)
+        default_cijene = {
+            'BiH': 12.5, 'Austrija': 90, 'Njemacka': 90, 'Slovenija': 80,
+            'Francuska': 90, 'Hrvatska': 50, 'Madjarska': 70,
+            'Svicarska': 90, 'Italija': 80,
         }
+        cijene = {**default_cijene, **cijene_dict}  # baza ima prednost
 
+        # --- 2. Validacija vremena ---
         if not t or not t.datum_polaska or not t.datum_dolaska:
             self.tuzemne_dnevnice = 0
             self.inozemne_dnevnice = 0
             return
 
-        # Pretvorba sati -> broj dnevnica prema pravilima
+        # --- 3. Pomoćna funkcija: sati → dnevnice ---
         def u_dnevnica(sati):
             if sati <= 0:
                 return 0.0
@@ -131,27 +130,27 @@ class RadniNalog(models.Model):
             dodatno = 0.5 if ostatak <= 8 else 1.0
             return puni + dodatno
 
-        # 1) ukupno (za cijelu turu)
+        # --- 4. Ukupno vrijeme ture ---
         ukupni_sati = (t.datum_dolaska - t.datum_polaska).total_seconds() / 3600.0
         ukupno_dnevnice = u_dnevnica(ukupni_sati)
 
-        # 2) ako je konačna država BiH -> sve tuzemno
+        # --- 5. Ako je konačna država BiH → sve tuzemno ---
         if self.konacna_drzava == "BiH":
             self.inozemne_dnevnice = 0.0
             self.tuzemne_dnevnice = round(ukupno_dnevnice * cijene['BiH'], 2)
             return
 
-        # 3) ako nema granica -> sve tuzemno
+        # --- 6. Ako nema granica → sve tuzemno ---
         if not t.granica_polazak or not t.granica_povratak:
             self.inozemne_dnevnice = 0.0
             self.tuzemne_dnevnice = round(ukupno_dnevnice * cijene['BiH'], 2)
             return
 
-        # 4) inozemne (interval između granica)
+        # --- 7. Inozemne dnevnice (između granica) ---
         inozem_sati = (t.granica_povratak - t.granica_polazak).total_seconds() / 3600.0
         inozemne_dnev = u_dnevnica(inozem_sati)
 
-        # 5) tuzemne (prije granice + poslije granice)
+        # --- 8. Tuzemne (prije + poslije granice) ---
         tuzem_sati = 0.0
         if t.datum_polaska < t.granica_polazak:
             tuzem_sati += (t.granica_polazak - t.datum_polaska).total_seconds() / 3600.0
@@ -159,15 +158,14 @@ class RadniNalog(models.Model):
             tuzem_sati += (t.datum_dolaska - t.granica_povratak).total_seconds() / 3600.0
         tuzemne_dnev = u_dnevnica(tuzem_sati)
 
-        # 6) IMEDIATNI CAP: ako zbroj prelazi ukupno_dnevnice -> smanji samo inozemne
+        # --- 9. CAP: zbroj ne smije biti veći od ukupno_dnevnice ---
         suma = inozemne_dnev + tuzemne_dnev
         if suma > ukupno_dnevnice:
-            # smanjimo inozemne tolik da suma == ukupno_dnevnice
             inozemne_dnev = max(0.0, ukupno_dnevnice - tuzemne_dnev)
 
-        # 7) konačan izračun u eurima
+        # --- 10. Konačni izračun u EUR ---
         cij_ino = cijene.get(self.konacna_drzava, 50)
-        cij_tuz = cijene['BiH']
+        cij_tuz = cijene.get('BiH', 12.5)
 
         self.inozemne_dnevnice = round(inozemne_dnev * cij_ino, 2)
         self.tuzemne_dnevnice = round(tuzemne_dnev * cij_tuz, 2)
@@ -190,4 +188,27 @@ def osvjezi_radni_nalog(tura):
     rn.vrijeme_granica_polazak = tura.granica_polazak #type: ignore
     rn.vrijeme_granica_povratak = tura.granica_povratak #type: ignore
 
-    rn.save()    
+    rn.save()   
+    
+# models.py - dodaj na kraj
+class CijenaDnevnica(models.Model):
+    DRZAVE = [
+        ('BiH', 'BiH'),
+        ('Austrija', 'Austrija'),
+        ('Njemacka', 'Njemacka'),
+        ('Slovenija', 'Slovenija'),
+        ('Francuska', 'Francuska'),
+        ('Hrvatska', 'Hrvatska'),
+        ('Madjarska', 'Madjarska'),
+        ('Svicarska', 'Svicarska'),
+        ('Italija', 'Italija'),
+    ]
+
+    drzava = models.CharField(max_length=50, choices=DRZAVE, unique=True)
+    iznos = models.FloatField(help_text="Iznos dnevnica u EUR po danu")
+
+    class Meta:
+        verbose_name_plural = "Cijene dnevnica"
+
+    def __str__(self):
+        return f"{self.get_drzava_display()} - {self.iznos} €" 

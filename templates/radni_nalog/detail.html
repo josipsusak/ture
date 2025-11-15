@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <h3>Dnevnica obračun</h3>
-
+<a href="{% url 'uredi_radni_nalog' radni_nalog.id %}" class="btn btn-warning">Uredi radni nalog</a>
 <table class="table table-bordered">
     <tr>
         <th>Tuzemne dnevnice</th>

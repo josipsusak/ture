@@ -1,0 +1,12 @@
+<!-- templates/radni_nalog/uredi.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Uredi radni nalog za turu: {{ radni_nalog.tura }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Spremi izmjene</button>
+    <a href="{% url 'radni_nalog_detail' radni_nalog.id %}" class="btn btn-secondary">Odustani</a>
+</form>
+{% endblock %}

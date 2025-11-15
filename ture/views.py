@@ -13,7 +13,7 @@ from reportlab.pdfbase.ttfonts import TTFont# type: ignore
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer# type: ignore
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle# type: ignore
 from reportlab.lib import colors# type: ignore
-from .models import Tura, Vozac, Vozilo, Naputak, RadniNalog, osvjezi_radni_nalog
+from .models import Tura, Vozac, Vozilo, Naputak, RadniNalog, osvjezi_radni_nalog, CijenaDnevnica
 from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm, RadniNalogForm
 
 def login_view(request):
@@ -443,3 +443,53 @@ def radni_nalog_detail(request, radni_nalog_id):
     return render(request, 'radni_nalog/detail.html', {'radni_nalog': radni_nalog})
 
 
+@login_required
+def uredi_radni_nalog(request, radni_nalog_id):
+    radni_nalog = get_object_or_404(RadniNalog, id=radni_nalog_id)
+    if request.method == 'POST':
+        form = RadniNalogForm(request.POST, instance=radni_nalog)
+        if form.is_valid():
+            form.save()  # save() poziva izracun_dnevnica() preko modela
+            messages.success(request, "Radni nalog ažuriran, dnevnice preračunate.")
+            return redirect('radni_nalog_detail', radni_nalog_id=radni_nalog.id)
+    else:
+        form = RadniNalogForm(instance=radni_nalog)
+    
+    return render(request, 'radni_nalog/uredi.html', {
+        'form': form,
+        'radni_nalog': radni_nalog,
+    })
+    
+
+@login_required
+def cijene_dnevnica(request):
+    # Dohvati sve cijene
+    cijene = CijenaDnevnica.objects.all().order_by('drzava')
+
+    if request.method == 'POST':
+        for cijena in cijene:
+            field_name = f'iznos_{cijena.id}'
+            novi_iznos_str = request.POST.get(field_name, '').strip()
+
+            if novi_iznos_str:
+                try:
+                    # Podrška za zarez i točku: 90,50 ili 90.50 → 90.50
+                    novi_iznos = float(novi_iznos_str.replace(',', '.'))
+                    if novi_iznos < 0:
+                        raise ValueError
+                    cijena.iznos = novi_iznos
+                    cijena.save()
+                except ValueError:
+                    messages.error(request, f"Neispravan iznos za {cijena.get_drzava_display()}: '{novi_iznos_str}'")
+                    continue
+
+        messages.success(request, "Cijene dnevnica su uspješno ažurirane.")
+        return redirect('cijene_dnevnica')
+
+    # --- PRIKAZ: Formatiraj iznos sa točkom i 2 decimale (za input) ---
+    for c in cijene:
+        c.iznos_input = f"{float(c.iznos):.2f}"  # 90.0 → "90.00"
+
+    return render(request, 'cijene_dnevnica.html', {
+        'cijene': cijene
+    })
