@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum
 from django.contrib import messages
@@ -15,6 +15,14 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle# type: igno
 from reportlab.lib import colors# type: ignore
 from .models import Tura, Vozac, Vozilo, Naputak, RadniNalog, osvjezi_radni_nalog, CijenaDnevnica
 from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm, RadniNalogForm
+
+def parse_int(value, default=None):
+    if value in (None, '', 'None'):
+        return default
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -38,18 +46,24 @@ def logout_view(request):
 
 @login_required
 def homepage(request):
-    mjesec = request.GET.get('mjesec')
-    godina = request.GET.get('godina')
+    mjesec = parse_int(request.GET.get('mjesec'))
+    godina = parse_int(request.GET.get('godina'))
     status = request.GET.get('status', 'aktivne')  # po defaultu aktivne
     # Odredi aktivan status prema odabiru
     aktivan_filter = True if status == 'aktivne' else False
 
-    if mjesec and godina:
-        ture = Tura.objects.filter(
-            aktivan=aktivan_filter,
-            datum_polaska__month=int(mjesec),
-            datum_polaska__year=int(godina)
-        ).order_by('datum_polaska')
+    if godina is not None:
+        if mjesec is not None:
+            ture = Tura.objects.filter(
+                aktivan=aktivan_filter,
+                datum_polaska__month=mjesec,
+                datum_polaska__year=godina
+            )
+        else:
+            ture = Tura.objects.filter(
+                aktivan=aktivan_filter,
+                datum_polaska__year=godina
+            ).order_by('datum_polaska')
     else:
         ture = Tura.objects.filter(aktivan=aktivan_filter).order_by('datum_polaska')
 
@@ -78,6 +92,70 @@ def homepage(request):
             upozorenja.append(f"❌ Vozilu {v.ime} je istekla registracija {v.vrijeme_registracije.strftime('%d.%m.%Y')}!")
         if v.servis_istekao():
             upozorenja.append(f"❌ Vozilo {v.ime} je prošao servis {v.servis.strftime('%d.%m.%Y')}!")
+            
+    # Dohvati GET parametre
+    # === FILTERI ZA RADNE NALOGE ===
+    status_rn = request.GET.get('status_rn', 'aktivni')  # default: aktivni
+    aktivan_rn = status_rn != 'zavrseni'
+
+    mjesec_rn = request.GET.get('mjesec_rn')
+    godina_rn = request.GET.get('godina_rn')
+    tjedan_rn = request.GET.get('tjedan_rn')
+    godina_tjedan_rn = request.GET.get('godina_tjedan_rn')
+
+    mjesec_rn_int = parse_int(mjesec_rn)
+    godina_rn_int = parse_int(godina_rn)
+    tjedan_rn_int = parse_int(tjedan_rn)
+    godina_tjedan_rn_int = parse_int(godina_tjedan_rn)
+
+    radni_nalozi = RadniNalog.objects.select_related('tura', 'tura__vozac').filter(aktivan=aktivan_rn)
+
+    # --- Filter po tjednu ---
+    if tjedan_rn_int is not None and godina_tjedan_rn_int is not None:
+        try:
+            start = datetime(godina_tjedan_rn_int, 1, 4)
+            start -= timedelta(days=start.weekday())
+            start += timedelta(weeks=tjedan_rn_int - 1)
+            end = start + timedelta(days=6)
+            radni_nalozi = radni_nalozi.filter(
+                tura__datum_polaska__date__gte=start.date(),
+                tura__datum_polaska__date__lte=end.date()
+            )
+        except:
+            pass
+
+    # 2. MJESEC + GODINA (ili samo GODINA)
+    elif godina_rn_int is not None:
+        if mjesec_rn_int is not None:
+            # Mjesec + Godina
+            radni_nalozi = radni_nalozi.filter(
+                tura__datum_polaska__month=mjesec_rn_int,
+                tura__datum_polaska__year=godina_rn_int
+        ).order_by('-tura__datum_polaska')
+    else:
+        # SAMO GODINA
+        radni_nalozi = radni_nalozi.filter(
+            tura__datum_polaska__year=datetime.now().year
+        ).order_by('-tura__datum_polaska')
+
+
+    # === Generiraj listu tjedana za trenutnu godinu ===
+    trenutna_godina_int = datetime.now().year
+    tjedni = []
+    prvi_dan = datetime(trenutna_godina_int, 1, 1)
+    prvi_pon = prvi_dan - timedelta(days=prvi_dan.weekday())
+
+    for t in range(1, 54):
+        pocetak = prvi_pon + timedelta(weeks=t-1)
+        kraj = pocetak + timedelta(days=6)
+        if pocetak.year > trenutna_godina_int and kraj.year > trenutna_godina_int:
+            break
+        if pocetak.year == trenutna_godina_int or kraj.year == trenutna_godina_int:
+            tjedni.append({
+                'broj': t,
+                'godina': pocetak.year,
+                'label': f"Tjedan {t} – {pocetak.strftime('%d.%m.')} – {kraj.strftime('%d.%m.%Y')}"
+            })
 
     return render(request, 'homepage.html', {
         'ture': ture,
@@ -94,7 +172,23 @@ def homepage(request):
         'odabrani_mjesec':int(mjesec) if mjesec else None,
         'odabrana_godina': int(godina) if godina else None,
         'odabrani_status': status,
+        'radni_nalozi': radni_nalozi,
+        'tjedni': tjedni,
+        'odabrani_mjesec_rn': int(mjesec_rn) if mjesec_rn else None,
+        'odabrana_godina_rn': int(godina_rn) if godina_rn else None,
+        'tjedan_rn': int(tjedan_rn) if tjedan_rn else None,
+        'godina_tjedan_rn': int(godina_tjedan_rn) if godina_tjedan_rn else None,
     })
+    
+@login_required
+def zavrsi_radni_nalog(request, rn_id):
+    rn = get_object_or_404(RadniNalog, id=rn_id)
+    if request.method == 'POST':
+        rn.aktivan = False
+        rn.save()
+        messages.success(request, f"Radni nalog #{rn.id} je završen.")#type: ignore
+        return redirect('homepage')
+    return render(request, 'radni_nalog/zavrsi.html', {'rn': rn})
 
 @login_required
 def unos_ture(request):

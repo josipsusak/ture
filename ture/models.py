@@ -84,6 +84,7 @@ class RadniNalog(models.Model):
     ])
     tuzemne_dnevnice = models.FloatField(blank=True, null=True)
     inozemne_dnevnice = models.FloatField(blank=True, null=True)
+    aktivan = models.BooleanField(default=True)  
     
     def clean(self):
         """

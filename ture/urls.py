@@ -23,4 +23,5 @@ urlpatterns = [
     path('radni_nalog/<int:radni_nalog_id>/', views.radni_nalog_detail, name='radni_nalog_detail'),
     path('radni_nalog/<int:radni_nalog_id>/uredi/', views.uredi_radni_nalog, name='uredi_radni_nalog'),
     path('cijene-dnevnica/', views.cijene_dnevnica, name='cijene_dnevnica'),
+    path('radni-nalog/<int:rn_id>/zavrsi/', views.zavrsi_radni_nalog, name='zavrsi_radni_nalog'),
 ]

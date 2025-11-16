@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Popis tura{% endblock %}
 
@@ -6,7 +7,7 @@
 
 {% if upozorenja %}
 <div class="alert alert-warning" role="alert">
-    <h5 class="alert-heading">⚠️ Upozorenja:</h5>
+    <h5 class="alert-heading">Upozorenja:</h5>
     <ul class="mb-0">
         {% for u in upozorenja %}
             <li>{{ u }}</li>
@@ -15,15 +16,24 @@
 </div>
 {% endif %}
 
+<!-- =================================== -->
+<!-- 1. POPIS TURA -->
+<!-- =================================== -->
 <h2 class="mb-4">Popis svih tura</h2>
 
-<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-    <form method="get" class="d-flex align-items-end flex-wrap gap-3 mb-0">
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <form method="get" class="d-flex align-items-end flex-wrap gap-3 mb-0" id="form-ture">
+        <!-- Skriveni filteri za radne naloge -->
+        <input type="hidden" name="tjedan_rn" value="{{ tjedan_rn }}">
+        <input type="hidden" name="godina_tjedan_rn" value="{{ godina_tjedan_rn }}">
+        <input type="hidden" name="mjesec_rn" value="{{ odabrani_mjesec_rn }}">
+        <input type="hidden" name="godina_rn" value="{{ odabrana_godina_rn }}">
+        <input type="hidden" name="status_rn" value="{{ odabrani_status_rn }}">
 
         <div>
-            <label for="mjesec" class="form-label mb-1">Filtriraj po mjesecu:</label>
+            <label for="mjesec" class="form-label mb-1">Mjesec:</label>
             <select name="mjesec" id="mjesec" class="form-select form-select-sm" style="width:auto;">
-                <option value="">-- Aktivne ture --</option>
+                <option value="">-- Svi --</option>
                 {% for m in svi_mjeseci %}
                     <option value="{{ m }}" {% if odabrani_mjesec == m %}selected{% endif %}>{{ m }}</option>
                 {% endfor %}
@@ -39,37 +49,36 @@
 
         <div>
             <label for="status" class="form-label mb-1">Status:</label>
-            <select name="status" id="status" class="form-select form-select-sm" style="width:auto;">
-                <option value="aktivne" {% if odabrani_status == 'aktivne' %}selected{% endif %}>Aktivne ture</option>
-                <option value="zavrsene" {% if odabrani_status == 'zavrsene' %}selected{% endif %}>Završene ture</option>
+            <select name="status" id="status" class="form-select form-select-sm">
+                <option value="aktivne" {% if odabrani_status == 'aktivne' %}selected{% endif %}>Aktivne</option>
+                <option value="zavrsene" {% if odabrani_status == 'zavrsene' %}selected{% endif %}>Završene</option>
             </select>
         </div>
 
         <div class="d-flex align-items-end gap-2">
             <button type="submit" class="btn btn-primary btn-sm">Filtriraj</button>
-            <a href="?mjesec=&godina={{ trenutna_godina }}" class="btn btn-outline-secondary btn-sm">Poništi</a>
+            <a href="{% url 'homepage' %}" class="btn btn-outline-secondary btn-sm">Poništi</a>
         </div>
     </form>
 
-    <!-- Dugme Dodaj turu -->
-    <a href="{% url 'unos_ture' %}" class="btn btn-danger btn-sm">
+    <a href="{% url 'unos_ture' %}" class="btn btn-success btn-sm">
         <i class="bi bi-plus-lg"></i> Dodaj turu
     </a>
 </div>
 
-<div class="table-responsive shadow-sm">
+<div class="table-responsive shadow-sm mb-5">
     <table class="table table-striped table-bordered align-middle">
         <thead class="table-light">
             <tr>
                 <th>Vozač</th>
                 <th>Relacija</th>
-                <th>Datum polaska</th>
-                <th>Datum dolaska</th>
-                <th>Prijeđeni km</th>
+                <th>Polazak</th>
+                <th>Povratak</th>
+                <th>Km</th>
                 <th>Zaduženje</th>
                 <th>Razduženje</th>
                 <th>Razlika</th>
-                <th>Br. putnog naloga</th>
+                <th>Br. PN</th>
                 <th>Iznos</th>
                 <th>Dnevnice</th>
                 <th>Čekanje</th>
@@ -82,32 +91,184 @@
                 <td><a href="{% url 'profil_vozaca' t.vozac.id %}" class="text-decoration-none">{{ t.vozac.ime }}</a></td>
                 <td><a href="{% url 'profil_ture' t.id %}" class="text-decoration-none">{{ t.relacija }}</a></td>
                 <td>{{ t.datum_polaska|date:"d.m.Y" }}</td>
-                <td>{{ t.datum_dolaska|date:"d.m.Y" }}</td>
-                <td>{{ t.kilometraza }}</td>
-                <td>{{ t.zaduzenje }}</td>
-                <td>{{ t.razduzenje }}</td>
-                <td>{{ t.razlika }}</td>
-                <td>{{ t.broj_putnog_naloga }}</td>
-                <td>{{ t.iznos_ture }}</td>
-                <td>{{ t.dnevnice }}</td>
-                <td>{{ t.cekanje|default:"-" }}</td>
+                <td>{{ t.datum_dolaska|date:"d.m.Y"|default:"—" }}</td>
+                <td>{{ t.kilometraza|default:"0" }}</td>
+                <td>{{ t.zaduzenje|floatformat:2 }}</td>
+                <td>{{ t.razduzenje|floatformat:2 }}</td>
+                <td>{{ t.razlika|floatformat:2 }}</td>
+                <td>{{ t.broj_putnog_naloga|default:"—" }}</td>
+                <td>{{ t.iznos_ture|floatformat:2 }}</td>
+                <td>{{ t.dnevnice|floatformat:2 }}</td>
+                <td>{{ t.cekanje|default:"—" }}</td>
                 <td>
                     <div class="d-flex gap-1">
                         <a href="{% url 'profil_ture' t.id %}" class="btn btn-sm btn-info text-white">Uredi</a>
-                        <form action="{% url 'zavrsi_turu' t.id %}" method="post">
+                        {% if t.aktivan %}
+                        <form action="{% url 'zavrsi_turu' t.id %}" method="post" class="d-inline">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-danger">Završi</button>
+                            <button type="submit" class="btn btn-sm btn-danger" 
+                                    onclick="return confirm('Završiti turu?')">Završi</button>
                         </form>
+                        {% endif %}
                     </div>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="13" class="text-center text-muted">Nema aktivnih tura.</td>
+                <td colspan="13" class="text-center text-muted py-4">Nema tura za prikaz.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<!-- =================================== -->
+<!-- 2. POPIS RADNIH NALOGA -->
+<!-- =================================== -->
+<h2 class="mb-4 mt-5">Popis radnih naloga</h2>
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <form method="get" class="d-flex align-items-end flex-wrap gap-3 mb-0" id="form-rn">
+        <!-- Skriveni filteri za ture -->
+        <input type="hidden" name="mjesec" value="{{ odabrani_mjesec }}">
+        <input type="hidden" name="godina" value="{{ odabrana_godina }}">
+        <input type="hidden" name="status" value="{{ odabrani_status }}">
+
+        <!-- Filter: TJEDAN -->
+        <div>
+            <label for="tjedan_rn" class="form-label mb-1">Tjedan:</label>
+            <select name="tjedan_rn" id="tjedan_rn" class="form-select form-select-sm" style="width:auto;">
+                <option value="">-- Svi tjedni --</option>
+                {% for t in tjedni %}
+                    <option value="{{ t.broj }}"
+                        data-godina="{{ t.godina }}"
+                        {% if t.broj == tjedan_rn and t.godina == godina_tjedan_rn %}selected{% endif %}>
+                        {{ t.label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Skriveni input za godinu tjedna -->
+        <input type="hidden" name="godina_tjedan_rn" id="godina_tjedan_rn_input" value="{{ godina_tjedan_rn }}">
+
+        <!-- Filter: MJESEC -->
+        <div>
+            <label for="mjesec_rn" class="form-label mb-1">Mjesec:</label>
+            <select name="mjesec_rn" id="mjesec_rn" class="form-select form-select-sm" style="width:auto;">
+                <option value="">-- Svi mjeseci --</option>
+                {% for m in svi_mjeseci %}
+                    <option value="{{ m }}" {% if odabrani_mjesec_rn == m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="godina_rn" class="form-label mb-1">Godina:</label>
+            <input type="number" name="godina_rn" id="godina_rn"
+                   class="form-control form-control-sm" style="width:90px;"
+                   value="{{ odabrana_godina_rn|default:trenutna_godina }}">
+        </div>
+
+        <!-- STATUS FILTER -->
+        <div>
+            <label for="status_rn" class="form-label mb-1">Status:</label>
+            <select name="status_rn" id="status_rn" class="form-select form-select-sm">
+                <option value="aktivni" {% if odabrani_status_rn == 'aktivni' %}selected{% endif %}>Aktivni</option>
+                <option value="zavrseni" {% if odabrani_status_rn == 'zavrseni' %}selected{% endif %}>Završeni</option>
+            </select>
+        </div>
+
+        <div class="d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-primary btn-sm">Filtriraj</button>
+            <a href="{% url 'homepage' %}" class="btn btn-outline-secondary btn-sm">Poništi</a>
+        </div>
+    </form>
+
+    <a href="{% url 'dodaj_radni_nalog' %}" class="btn btn-danger btn-sm">
+        <i class="bi bi-plus-lg"></i> Dodaj radni nalog
+    </a>
+</div>
+
+<!-- Tablica radnih naloga -->
+<div class="table-responsive shadow-sm">
+    <table class="table table-striped table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Vozač</th>
+                <th>Radni nalog</th>
+                <th>Relacija</th>
+                <th>Tuzemne</th>
+                <th>Inozemne</th>
+                <th>Ukupno</th>
+                <th>Država</th>
+                <th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rn in radni_nalozi %}
+            <tr>
+                <td>{{ rn.tura.vozac.ime }}</td>
+                <td><a href="{% url 'radni_nalog_detail' rn.id %}">#{{ rn.id }}</a></td>
+                <td>{{ rn.tura.relacija }}</td>
+                <td class="text-success fw-bold">{{ rn.tuzemne_dnevnice|floatformat:2 }} €</td>
+                <td class="text-info fw-bold">{{ rn.inozemne_dnevnice|floatformat:2 }} €</td>
+                <td class="fw-bold">{{ rn.tuzemne_dnevnice|add:rn.inozemne_dnevnice|floatformat:2 }} €</td>
+                <td><span class="badge bg-warning text-dark">{{ rn.konacna_drzava }}</span></td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{% url 'radni_nalog_detail' rn.id %}" class="btn btn-sm btn-primary">Prikaži</a>
+                        <a href="{% url 'uredi_radni_nalog' rn.id %}" class="btn btn-sm btn-warning text-white">Uredi</a>
+                        {% if rn.aktivan %}
+                        <form action="{% url 'zavrsi_radni_nalog' rn.id %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Završiti radni nalog #{{ rn.id }}?')">
+                                Završi
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">Nema radnih naloga za odabrani period.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- =================================== -->
+<!-- JAVASCRIPT: Ukloni None i prazne vrijednosti iz URL-a -->
+<!-- =================================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    ['#form-ture', '#form-rn'].forEach(selector => {
+        const form = document.querySelector(selector);
+        if (!form) return;
+
+        form.addEventListener('submit', function () {
+            this.querySelectorAll('input, select').forEach(field => {
+                const val = field.value?.trim();
+                if (!val || val === 'None' || val === '') {
+                    field.removeAttribute('name');
+                }
+            });
+        });
+    });
+
+    // Sinhronizacija godine tjedna
+    const tjedanSelect = document.getElementById('tjedan_rn');
+    const godinaInput = document.getElementById('godina_tjedan_rn_input');
+    if (tjedanSelect && godinaInput) {
+        tjedanSelect.addEventListener('change', function () {
+            const selected = this.options[this.selectedIndex];
+            godinaInput.value = selected.getAttribute('data-godina') || '';
+        });
+    }
+});
+</script>
 
 {% endblock %}

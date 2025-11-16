@@ -42,5 +42,14 @@
     <small>© {% now "Y" %} Sustav za ture vozača</small>
 </footer>
 
+<!-- ✅ Bootstrap JS Bundle with Popper -->
+<script>
+  document.getElementById('tjedan_rn').addEventListener('change', function() {
+      const selected = this.options[this.selectedIndex];
+      const godina = selected.getAttribute('data-godina');
+      document.getElementById('godina_tjedan_rn_input').value = godina || '';
+  });
+</script>
+
 </body>
 </html>
