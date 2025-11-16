@@ -78,9 +78,9 @@ class Naputak(models.Model):
 class RadniNalog(models.Model):
     tura = models.OneToOneField(Tura, on_delete=models.CASCADE, related_name='radni_nalog')
     konacna_drzava = models.CharField(max_length=50, choices=[
-        ('BiH','BiH'), ('Austrija','Austrija'), ('Njemacka','Njemacka'),
+        ('BiH','BiH'), ('Austrija','Austrija'), ('Njemačka','Njemačka'),
         ('Slovenija','Slovenija'), ('Francuska','Francuska'), ('Hrvatska','Hrvatska'),
-        ('Madjarska','Madjarska'), ('Svicarska','Svicarska'), ('Italija','Italija')
+        ('Mađarska','Mađarska'), ('Švicarska','Švicarska'), ('Italija','Italija')
     ])
     tuzemne_dnevnice = models.FloatField(blank=True, null=True)
     inozemne_dnevnice = models.FloatField(blank=True, null=True)
@@ -105,9 +105,9 @@ class RadniNalog(models.Model):
         
         # Fallback ako nema cijena u bazi (npr. prvo pokretanje)
         default_cijene = {
-            'BiH': 12.5, 'Austrija': 90, 'Njemacka': 90, 'Slovenija': 80,
-            'Francuska': 90, 'Hrvatska': 50, 'Madjarska': 70,
-            'Svicarska': 90, 'Italija': 80,
+            'BiH': 12.5, 'Austrija': 90, 'Njemačka': 90, 'Slovenija': 80,
+            'Francuska': 90, 'Hrvatska': 50, 'Mađarska': 70,
+            'Švicarska': 90, 'Italija': 80,
         }
         cijene = {**default_cijene, **cijene_dict}  # baza ima prednost
 
@@ -195,12 +195,12 @@ class CijenaDnevnica(models.Model):
     DRZAVE = [
         ('BiH', 'BiH'),
         ('Austrija', 'Austrija'),
-        ('Njemacka', 'Njemacka'),
+        ('Njemacka', 'Njemačka'),
         ('Slovenija', 'Slovenija'),
         ('Francuska', 'Francuska'),
         ('Hrvatska', 'Hrvatska'),
-        ('Madjarska', 'Madjarska'),
-        ('Svicarska', 'Svicarska'),
+        ('Madjarska', 'Mađarska'),
+        ('Svicarska', 'Švicarska'),
         ('Italija', 'Italija'),
     ]
 
@@ -211,4 +211,4 @@ class CijenaDnevnica(models.Model):
         verbose_name_plural = "Cijene dnevnica"
 
     def __str__(self):
-        return f"{self.get_drzava_display()} - {self.iznos} €" 
+        return f"{self.get_drzava_display()} - {self.iznos} €" #type: ignore

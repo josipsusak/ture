@@ -451,7 +451,7 @@ def uredi_radni_nalog(request, radni_nalog_id):
         if form.is_valid():
             form.save()  # save() poziva izracun_dnevnica() preko modela
             messages.success(request, "Radni nalog ažuriran, dnevnice preračunate.")
-            return redirect('radni_nalog_detail', radni_nalog_id=radni_nalog.id)
+            return redirect('radni_nalog_detail', radni_nalog_id=radni_nalog.id)#type: ignore
     else:
         form = RadniNalogForm(instance=radni_nalog)
     
@@ -468,7 +468,7 @@ def cijene_dnevnica(request):
 
     if request.method == 'POST':
         for cijena in cijene:
-            field_name = f'iznos_{cijena.id}'
+            field_name = f'iznos_{cijena.id}'#type: ignore
             novi_iznos_str = request.POST.get(field_name, '').strip()
 
             if novi_iznos_str:
@@ -480,7 +480,7 @@ def cijene_dnevnica(request):
                     cijena.iznos = novi_iznos
                     cijena.save()
                 except ValueError:
-                    messages.error(request, f"Neispravan iznos za {cijena.get_drzava_display()}: '{novi_iznos_str}'")
+                    messages.error(request, f"Neispravan iznos za {cijena.get_drzava_display()}: '{novi_iznos_str}'")#type: ignore
                     continue
 
         messages.success(request, "Cijene dnevnica su uspješno ažurirane.")
@@ -488,7 +488,7 @@ def cijene_dnevnica(request):
 
     # --- PRIKAZ: Formatiraj iznos sa točkom i 2 decimale (za input) ---
     for c in cijene:
-        c.iznos_input = f"{float(c.iznos):.2f}"  # 90.0 → "90.00"
+        c.iznos_input = f"{float(c.iznos):.2f}"  #type: ignore
 
     return render(request, 'cijene_dnevnica.html', {
         'cijene': cijene
