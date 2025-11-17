@@ -107,7 +107,7 @@ def homepage(request):
     godina_rn_int = parse_int(godina_rn)
     tjedan_rn_int = parse_int(tjedan_rn)
     godina_tjedan_rn_int = parse_int(godina_tjedan_rn)
-    print("!!!!!!!!!!!!!!!!!!", mjesec_rn_int, godina_rn_int, tjedan_rn_int )
+
     radni_nalozi = RadniNalog.objects.select_related('tura', 'tura__vozac').filter(aktivan=aktivan_rn)
 
     # --- Filter po tjednu ---
@@ -249,15 +249,19 @@ def unos_vozaca(request):
 def profil_vozaca(request, vozac_id):
     vozac = get_object_or_404(Vozac, id=vozac_id)
     
-    
     mjesec = request.GET.get('mjesec')
     godina = request.GET.get('godina')
     
     if mjesec and godina:
         ture = Tura.objects.filter(
             vozac=vozac,
-            datum_dolaska__month=int(mjesec),
-            datum_dolaska__year=int(godina)
+            datum_polaska__month=mjesec,
+            datum_polaska__year=godina
+            ).order_by('datum_polaska')
+    elif godina:
+        ture = Tura.objects.filter(
+            vozac=vozac,
+            datum_polaska__year=godina
             ).order_by('datum_polaska')
     else:
         ture = Tura.objects.filter(vozac=vozac).order_by('datum_polaska')
