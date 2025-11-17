@@ -38,7 +38,7 @@ class Tura(models.Model):
         
         # Dnevnice = (iznos_ture*1.16) - iznos_ture = iznos_ture * 0.16
         if self.iznos_ture is not None and self.vozac and self.vozac.postotak:
-            self.dnevnice = round(self.iznos_ture * self.vozac.postotak, 2)
+            self.dnevnice = round(self.iznos_ture * (self.vozac.postotak/100), 2)
 
         super().save(*args, **kwargs)
         

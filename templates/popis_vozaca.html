@@ -32,7 +32,7 @@
                 </td>
                 <td>{{ v.zaduzenje_prethodni_mjesec }}</td>
                 <td>{{ v.uplaceno_na_banku }}</td>
-                <td>{{ v.postotak|floatformat:2 }}%</td>
+                <td>{{ v.postotak }}%</td>
                 <td class="text-center">
                     <a href="{% url 'profil_vozaca' v.id %}" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-eye"></i> Profil
@@ -48,5 +48,31 @@
     Nema unesenih vozača.
 </div>
 {% endif %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    ['#form-ture', '#form-rn'].forEach(selector => {
+        const form = document.querySelector(selector);
+        if (!form) return;
 
+        form.addEventListener('submit', function () {
+            this.querySelectorAll('input, select').forEach(field => {
+                const val = field.value?.trim();
+                if (!val || val === 'None' || val === '') {
+                    field.removeAttribute('name');
+                }
+            });
+        });
+    });
+
+    // Sinhronizacija godine tjedna
+    const tjedanSelect = document.getElementById('tjedan_rn');
+    const godinaInput = document.getElementById('godina_tjedan_rn_input');
+    if (tjedanSelect && godinaInput) {
+        tjedanSelect.addEventListener('change', function () {
+            const selected = this.options[this.selectedIndex];
+            godinaInput.value = selected.getAttribute('data-godina') || '';
+        });
+    }
+});
+</script>
 {% endblock %}

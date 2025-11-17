@@ -107,7 +107,7 @@ def homepage(request):
     godina_rn_int = parse_int(godina_rn)
     tjedan_rn_int = parse_int(tjedan_rn)
     godina_tjedan_rn_int = parse_int(godina_tjedan_rn)
-
+    print("!!!!!!!!!!!!!!!!!!", mjesec_rn_int, godina_rn_int, tjedan_rn_int )
     radni_nalozi = RadniNalog.objects.select_related('tura', 'tura__vozac').filter(aktivan=aktivan_rn)
 
     # --- Filter po tjednu ---
@@ -125,18 +125,22 @@ def homepage(request):
             pass
 
     # 2. MJESEC + GODINA (ili samo GODINA)
-    elif godina_rn_int is not None:
+    if godina_rn_int is not None:
         if mjesec_rn_int is not None:
             # Mjesec + Godina
             radni_nalozi = radni_nalozi.filter(
                 tura__datum_polaska__month=mjesec_rn_int,
                 tura__datum_polaska__year=godina_rn_int
         ).order_by('-tura__datum_polaska')
+        else:
+            # SAMO GODINA
+            radni_nalozi = radni_nalozi.filter(
+                tura__datum_polaska__year=godina_rn_int
+            ).order_by('-tura__datum_polaska')
     else:
-        # SAMO GODINA
         radni_nalozi = radni_nalozi.filter(
-            tura__datum_polaska__year=datetime.now().year
-        ).order_by('-tura__datum_polaska')
+                aktivan=aktivan_rn
+            ).order_by('-tura__datum_polaska')
 
 
     # === Generiraj listu tjedana za trenutnu godinu ===
