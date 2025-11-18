@@ -79,7 +79,9 @@
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Ture vozača</h5>
-            <a href="{% url 'export_vozac_pdf' vozac.id %}" class="btn btn-danger btn-sm">📄 Eksport ture u PDF</a>
+            <a href="{% url 'export_vozac_pdf' vozac.id %}?mjesec={{ odabrani_mjesec|default:'' }}&godina={{ odabrana_godina|default:trenutna_godina }}" class="btn btn-danger btn-sm">
+            Eksport ture u PDF
+            </a>
         </div>
 
         <div class="card-body table-responsive">
