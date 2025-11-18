@@ -1,5 +1,5 @@
 from django import forms
-from .models import Tura, Vozac, Vozilo, Naputak
+from .models import Tura, Vozac, Vozilo, Naputak, RadniNalog
 
 class VozacForm(forms.ModelForm):
     class Meta:
@@ -20,6 +20,8 @@ class TuraForm(forms.ModelForm):
             'relacija',
             'datum_polaska',
             'datum_dolaska',
+            'granica_polazak',
+            'granica_povratak',
             'kilometraza',
             'zaduzenje',
             'razduzenje',
@@ -28,8 +30,10 @@ class TuraForm(forms.ModelForm):
             'cekanje',
         ]
         widgets = {
-            'datum_polaska': forms.DateInput(attrs={'type': 'date'}),
-            'datum_dolaska': forms.DateInput(attrs={'type': 'date'}),
+            'datum_polaska': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
+            'datum_dolaska': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
+            'granica_polazak': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
+            'granica_povratak': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
             'relacija': forms.Textarea(attrs={'rows': 2, 'cols': 80}),
         }
         labels = {
@@ -37,6 +41,8 @@ class TuraForm(forms.ModelForm):
             'relacija': 'Relacija',
             'datum_polaska': 'Datum polaska',
             'datum_dolaska': 'Datum dolaska',
+            'granica_polazak': 'Prelazak granice - polazak',
+            'granica_povratak': 'Prelazak granice - povratak',
             'kilometraza': 'Kilometraža',
             'zaduzenje': 'Zaduženje',
             'razduzenje':'Razduženje',
@@ -74,4 +80,15 @@ class NaputakForm(forms.ModelForm):
         labels = {
             'sadrzaj': 'Sadržaj naputka',
         }
+        
+
+class RadniNalogForm(forms.ModelForm):
+    class Meta:
+        model = RadniNalog
+        fields = ['tura', 'konacna_drzava']
+        labels = {
+            'tura': 'Tura',
+            'konacna_drzava': 'Konačna država',
+        }
+
         

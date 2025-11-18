@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %} {# Ako koristiš custom CSS #}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Naslov + gumb -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0 text-primary fw-bold">
+            <i class="bi bi-calculator me-2"></i>
+            Dnevnica obračun - {{ radni_nalog.tura.relacija }}
+        </h3>
+        <a href="{% url 'uredi_radni_nalog' radni_nalog.id %}" 
+           class="btn btn-warning btn-sm d-flex align-items-center shadow-sm">
+            <i class="bi bi-pencil-square me-2"></i>Uredi radni nalog
+        </a>
+    </div>
+
+    <!-- Kartica s podacima -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #007bff, #0056b3);">
+            <h5 class="mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                Detalji putovanja i obračuna
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <tbody>
+                        <tr>
+                            <th scope="row" class="text-muted bg-light" style="width: 40%;">
+                                <i class="bi bi-signpost-2 text-primary me-2"></i>Relacija
+                            </th>
+                            <td class="fw-semibold">{{ radni_nalog.tura.relacija }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row" class="text-muted bg-light">
+                                <i class="bi bi-house-door text-success me-2"></i>Tuzemne dnevnice
+                            </th>
+                            <td class="text-success fw-bold">{{ radni_nalog.tuzemne_dnevnice }} €</td>
+                        </tr>
+                        <tr>
+                            <th scope="row" class="text-muted bg-light">
+                                <i class="bi bi-globe text-info me-2"></i>Inozemne dnevnice
+                            </th>
+                            <td class="text-info fw-bold">{{ radni_nalog.inozemne_dnevnice }} €</td>
+                        </tr>
+                        <tr>
+                            <th scope="row" class="text-muted bg-light">
+                                <i class="bi bi-flag text-warning me-2"></i>Konačna država
+                            </th>
+                            <td>
+                                <span class="badge bg-warning text-dark">{{ radni_nalog.konacna_drzava }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row" class="text-muted bg-light">
+                                <i class="bi bi-box-arrow-right text-primary me-2"></i>Polazak
+                            </th>
+                            <td>{{ radni_nalog.tura.datum_polaska|date:"d.m.Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row" class="text-muted bg-light">
+                                <i class="bi bi-box-arrow-in-left text-primary me-2"></i>Povratak
+                            </th>
+                            <td>{{ radni_nalog.tura.datum_dolaska|date:"d.m.Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row" class="text-muted bg-light">
+                                <i class="bi bi-border-left text-secondary me-2"></i>Granica (polazak)
+                            </th>
+                            <td>{{ radni_nalog.tura.granica_polazak|date:"d.m.Y H:i"|default:"—" }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row" class="text-muted bg-light">
+                                <i class="bi bi-border-right text-secondary me-2"></i>Granica (povratak)
+                            </th>
+                            <td>{{ radni_nalog.tura.granica_povratak|date:"d.m.Y H:i"|default:"—" }}</td>
+                        </tr>
+                        <tr class="table-primary">
+                            <th scope="row" class="bg-primary text-white">
+                                <i class="bi bi-cash-stack text-white me-2"></i>UKUPNO
+                            </th>
+                            <td class="bg-primary text-white fw-bold fs-5">
+                                {{ radni_nalog.tuzemne_dnevnice|add:radni_nalog.inozemne_dnevnice }} €
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-light text-muted small">
+            <i class="bi bi-info-circle me-1"></i>
+            Obračun temeljen na pravilima za BiH | Vrijeme: {% now "d.m.Y" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
