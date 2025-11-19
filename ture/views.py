@@ -10,7 +10,7 @@ from django.conf import settings
 from reportlab.lib.pagesizes import A4, landscape # type: ignore
 from reportlab.pdfbase import pdfmetrics# type: ignore
 from reportlab.pdfbase.ttfonts import TTFont# type: ignore
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer# type: ignore
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, KeepInFrame # type: ignore
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle# type: ignore
 from reportlab.lib import colors# type: ignore
 from .models import Tura, Vozac, Vozilo, Naputak, RadniNalog, osvjezi_radni_nalog, CijenaDnevnica
@@ -478,17 +478,10 @@ def export_vozac_pdf(request, vozac_id):
     godina = request.GET.get('godina')
 
     if mjesec and godina:
-        ture = Tura.objects.filter(
-            vozac=vozac,
-            datum_polaska__month=mjesec,
-            datum_polaska__year=godina
-        ).order_by('datum_polaska')
+        ture = Tura.objects.filter(vozac=vozac, datum_polaska__month=mjesec, datum_polaska__year=godina).order_by('datum_polaska')
         naziv_perioda = f"{int(mjesec)}. mjesec {godina}"
     elif godina:
-        ture = Tura.objects.filter(
-            vozac=vozac,
-            datum_polaska__year=godina
-        ).order_by('datum_polaska')
+        ture = Tura.objects.filter(vozac=vozac, datum_polaska__year=godina).order_by('datum_polaska')
         naziv_perioda = f"{godina}. godina"
     else:
         ture = Tura.objects.filter(vozac=vozac).order_by('datum_polaska')
@@ -496,32 +489,60 @@ def export_vozac_pdf(request, vozac_id):
 
     if not ture.exists():
         messages.info(request, "Nema tura za odabrani period.")
-        return redirect('profil_vozaca', vozac_id=vozac.id)# type: ignore
+        return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
 
-    # === PDF ===
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="Ture_{vozac.ime}_{naziv_perioda.replace(" ", "_")}.pdf"'
 
     font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Arial.ttf')
     pdfmetrics.registerFont(TTFont('Arial', font_path))
 
-    doc = SimpleDocTemplate(response, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=40, bottomMargin=30)# type: ignore
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=20, bottomMargin=30)#type: ignore
     elements = []
-
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name='CustomTitle', fontName='Arial', fontSize=20, alignment=1, spaceAfter=30))
+    styles.add(ParagraphStyle(name='CustomTitle', fontName='Arial', fontSize=20, alignment=1, spaceAfter=10))
     styles.add(ParagraphStyle(name='CustomNormal', fontName='Arial', fontSize=10, leading=12))
-    styles.add(ParagraphStyle(name='BilancaLabel', fontName='Arial', fontSize=12, textColor=colors.black))
-    styles.add(ParagraphStyle(name='BilancaIznos', fontName='Arial', fontSize=14, textColor=colors.black))
+    styles.add(ParagraphStyle(name='BilancaLabel', fontName='Arial', fontSize=12))
+    styles.add(ParagraphStyle(name='BilancaIznos', fontName='Arial', fontSize=14))
+
+    # === DVA LOGA – GORNJI LIJEVI KUT, MALI, LIJEVO PORAVNATI ===
+    logo1_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo1.png')
+    logo2_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo2.png')
+
+    logos = []
+    if os.path.exists(logo1_path):
+        img1 = Image(logo1_path, width=75, height=48)
+        img1.hAlign = 'LEFT'
+        logos.append(img1)
+    if os.path.exists(logo2_path):
+        img2 = Image(logo2_path, width=75, height=48)
+        img2.hAlign = 'LEFT'
+        logos.append(img2)
+
+    if logos:
+        if len(logos) == 2:
+            logo_table = Table([[logos[0], logos[1]]], colWidths=[85, 85])
+        else:
+            logo_table = Table([[logos[0]]], colWidths=[85])
+        
+        logo_table.setStyle(TableStyle([
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (-1,-1), 40),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+        ]))
+        elements.append(KeepInFrame(600, 100, [logo_table], hAlign='LEFT', vAlign='TOP'))
+        elements.append(Spacer(1, 12))
+    else:
+        elements.append(Spacer(1, 20))
 
     # Naslov
     elements.append(Paragraph(f"TURE – {vozac.ime}", styles['CustomTitle']))
-    elements.append(Paragraph(naziv_perioda,
-                              ParagraphStyle(name='Sub', fontName='Arial', fontSize=14, alignment=1, spaceAfter=25)))
+    elements.append(Paragraph(naziv_perioda, ParagraphStyle(name='Sub', fontName='Arial', fontSize=14, alignment=1, spaceAfter=25)))
 
-    # Tablica – samo zbrojevi (bez riječi "UKUPNO")
+    # Tablica
     data = [["Relacija", "Polazak", "Povratak", "Km", "Zaduženje", "Razduženje", "Razlika", "Iznos", "Dnevnice", "Čekanje"]]
-
     ukupno_km = ukupno_zaduz = ukupno_razduz = ukupno_razlika = ukupno_iznos = ukupno_dnevnice = ukupno_cekanje = 0
 
     for t in ture:
@@ -536,8 +557,7 @@ def export_vozac_pdf(request, vozac_id):
             Paragraph(f"{t.iznos_ture:.2f}" if t.iznos_ture is not None else "", styles['CustomNormal']),
             Paragraph(f"{t.dnevnice:.2f}" if t.dnevnice is not None else "", styles['CustomNormal']),
             Paragraph(f"{t.cekanje:.2f}" if t.cekanje is not None else "", styles['CustomNormal']),
-        ])# type: ignore
-
+        ])#type: ignore
         ukupno_km += t.kilometraza or 0
         ukupno_zaduz += t.zaduzenje or 0
         ukupno_razduz += t.razduzenje or 0
@@ -546,32 +566,24 @@ def export_vozac_pdf(request, vozac_id):
         ukupno_dnevnice += t.dnevnice or 0
         ukupno_cekanje += t.cekanje or 0
 
-    # Red sa zbrojevima – bez teksta "UKUPNO"
-    data.append([
-        "", "", "", 
-        Paragraph(f"<b>{ukupno_km}</b>", styles['CustomNormal']),
-        Paragraph(f"<b>{ukupno_zaduz:.2f}</b>", styles['CustomNormal']),
-        Paragraph(f"<b>{ukupno_razduz:.2f}</b>", styles['CustomNormal']),
-        Paragraph(f"<b>{ukupno_razlika:.2f}</b>", styles['CustomNormal']),
-        Paragraph(f"<b>{ukupno_iznos:.2f}</b>", styles['CustomNormal']),
-        Paragraph(f"<b>{ukupno_dnevnice:.2f}</b>", styles['CustomNormal']),
-        Paragraph(f"<b>{ukupno_cekanje:.2f}</b>", styles['CustomNormal']),
-    ])# type: ignore
+    data.append(["", "", "",
+                 Paragraph(f"<b>{ukupno_km}</b>", styles['CustomNormal']),
+                 Paragraph(f"<b>{ukupno_zaduz:.2f}</b>", styles['CustomNormal']),
+                 Paragraph(f"<b>{ukupno_razduz:.2f}</b>", styles['CustomNormal']),
+                 Paragraph(f"<b>{ukupno_razlika:.2f}</b>", styles['CustomNormal']),
+                 Paragraph(f"<b>{ukupno_iznos:.2f}</b>", styles['CustomNormal']),
+                 Paragraph(f"<b>{ukupno_dnevnice:.2f}</b>", styles['CustomNormal']),
+                 Paragraph(f"<b>{ukupno_cekanje:.2f}</b>", styles['CustomNormal'])])#type: ignore
 
-    # Tablica
     table = Table(data, colWidths=[140, 70, 70, 60, 70, 70, 70, 70, 70, 60])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#dddddd')),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.black),
-        ('FONTNAME', (0,0), (-1,0), 'Arial'),
-        ('FONTSIZE', (0,0), (-1,0), 10),
-
-        ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#bbbbbb')),  # samo zadnji red (zbrojevi) tamniji
         ('GRID', (0,0), (-1,-1), 0.8, colors.black),
+        ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#bbbbbb')),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('ALIGN', (3,1), (-1,-1), 'RIGHT'),
-        ('FONTNAME', (0,1), (-1,-2), 'Arial'),
-        ('FONTSIZE', (0,1), (-1,-1), 10),
+        ('FONTNAME', (0,0), (-1,0), 'Arial'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('LEFTPADDING', (0,0), (-1,-1), 6),
         ('RIGHTPADDING', (0,0), (-1,-1), 6),
@@ -580,23 +592,13 @@ def export_vozac_pdf(request, vozac_id):
     ]))
     elements.append(table)
 
-    # === BILANCA – izdvojena u desni donji kut ===
+    # Bilanca dolje desno
     bilanca = round(ukupno_razlika - ukupno_dnevnice - ukupno_cekanje + vozac.zaduzenje_prethodni_mjesec + vozac.uplaceno_na_banku, 2)
-
     elements.append(Spacer(1, 20))
-
-    # Mala tablica 2x1 samo za bilancu – poravnata desno
-    bilanca_data = [
-        [Paragraph("Bilanca:", styles['BilancaLabel']), Paragraph(f"<b>{bilanca:,.2f} €</b>".replace(',', 'X').replace('.', ',').replace('X', '.'), styles['BilancaIznos'])],
-    ]
-    bilanca_table = Table(bilanca_data, colWidths=[100, 100])
-    bilanca_table.hAlign = 'RIGHT'  # ključ za desno poravnanje
-    bilanca_table.setStyle(TableStyle([
-        ('ALIGN', (0,0), (0,0), 'RIGHT'),
-        ('ALIGN', (1,0), (1,0), 'RIGHT'),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (1,0), (1,0), 20),
-    ]))
+    bilanca_table = Table([[Paragraph("Bilanca:", styles['BilancaLabel']),
+                            Paragraph(f"<b>{bilanca:,.2f} €</b>".replace(',', 'X').replace('.', ',').replace('X', '.'), styles['BilancaIznos'])]],
+                          colWidths=[100, 100])
+    bilanca_table.hAlign = 'RIGHT'
     elements.append(bilanca_table)
 
     doc.build(elements)
@@ -675,7 +677,6 @@ def cijene_dnevnica(request):
 @login_required
 def export_vozacev_tjedan_pdf(request, vozac_id):
     vozac = get_object_or_404(Vozac, id=vozac_id)
-
     tjedan = parse_int(request.GET.get('tjedan_rn'))
     godina_tjedan = parse_int(request.GET.get('godina_tjedan_rn'))
 
@@ -688,7 +689,7 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         start -= timedelta(days=start.weekday())
         start_date = start + timedelta(weeks=tjedan - 1)
         end_date = start_date + timedelta(days=6)
-    except (ValueError, OverflowError):
+    except:
         messages.error(request, "Neispravan tjedan ili godina!")
         return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
 
@@ -702,61 +703,75 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         messages.info(request, f"Nema radnih naloga za tjedan {tjedan}.")
         return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
 
-    # === PDF – B&W friendly ===
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="RN_{vozac.ime}_Tjedan_{tjedan}_{godina_tjedan}.pdf"'
 
     font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Arial.ttf')
     pdfmetrics.registerFont(TTFont('Arial', font_path))
 
-    doc = SimpleDocTemplate(response, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=40, bottomMargin=30)#type: ignore
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=20, bottomMargin=30)#type: ignore
     elements = []
 
+    # === DVA LOGA – GORNJI LIJEVI KUT ===
+    logo1_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo1.png')
+    logo2_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo2.png')
+
+    logos = []
+    if os.path.exists(logo1_path):
+        img1 = Image(logo1_path, width=75, height=48)
+        img1.hAlign = 'LEFT'
+        logos.append(img1)
+    if os.path.exists(logo2_path):
+        img2 = Image(logo2_path, width=75, height=48)
+        img2.hAlign = 'LEFT'
+        logos.append(img2)
+
+    if logos:
+        if len(logos) == 2:
+            logo_table = Table([[logos[0], logos[1]]], colWidths=[85, 85])
+        else:
+            logo_table = Table([[logos[0]]], colWidths=[85])
+        
+        logo_table.setStyle(TableStyle([
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (-1,-1), 40),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+        ]))
+        elements.append(KeepInFrame(600, 100, [logo_table], hAlign='LEFT', vAlign='TOP'))
+        elements.append(Spacer(1, 12))
+
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name='CustomTitle', fontName='Arial', fontSize=20, alignment=1, spaceAfter=30))
+    styles.add(ParagraphStyle(name='CustomTitle', fontName='Arial', fontSize=20, alignment=1, spaceAfter=10))
     styles.add(ParagraphStyle(name='CustomNormal', fontName='Arial', fontSize=10, leading=12))
 
-    # Naslov
     elements.append(Paragraph(f"RADNI NALOZI – {vozac.ime}", styles['CustomTitle']))
-    elements.append(Paragraph(
-        f"Tjedan {tjedan} / {godina_tjedan}  •  {start_date.strftime('%d.%m.')} – {end_date.strftime('%d.%m.%Y')}",
-        ParagraphStyle(name='Sub', fontName='Arial', fontSize=14, alignment=1, spaceAfter=25)
-    ))
+    elements.append(Paragraph(f"Tjedan {tjedan} / {godina_tjedan}  •  {start_date.strftime('%d.%m.')} – {end_date.strftime('%d.%m.%Y')}",
+                              ParagraphStyle(name='Sub', fontName='Arial', fontSize=14, alignment=1, spaceAfter=25)))
 
     # Tablica
     data = [["Relacija", "Polazak", "Povratak", "Država", "Tuzemne (€)", "Inozemne (€)", "Ukupno (€)"]]
-
     ukupno_tuzemne = ukupno_inozemne = ukupno_sve = 0
 
     for rn in radni_nalozi:
         tura = rn.tura
-        drzava = rn.konacna_drzava or "-"
-        polazak = tura.datum_polaska.strftime('%d.%m.') if tura.datum_polaska else "-"
-        povratak = tura.datum_dolaska.strftime('%d.%m.') if tura.datum_dolaska else "-"
-
-        # ISPRAVLJENO – uklonjen greška sa "rn.tuz"
         ukupno_po_nalogu = rn.tuzemne_dnevnice + rn.inozemne_dnevnice#type: ignore
-
         data.append([
-            Paragraph(tura.relacija or "-", styles['CustomNormal']),
-            Paragraph(polazak, styles['CustomNormal']),
-            Paragraph(povratak, styles['CustomNormal']),
-            Paragraph(drzava, styles['CustomNormal']),
+            Paragraph(tura.relacija or "", styles['CustomNormal']),
+            Paragraph(tura.datum_polaska.strftime('%d.%m.') if tura.datum_polaska else "", styles['CustomNormal']),
+            Paragraph(tura.datum_dolaska.strftime('%d.%m.') if tura.datum_dolaska else "", styles['CustomNormal']),
+            Paragraph(rn.konacna_drzava or "", styles['CustomNormal']),
             Paragraph(f"{rn.tuzemne_dnevnice:.2f}", styles['CustomNormal']),
             Paragraph(f"{rn.inozemne_dnevnice:.2f}", styles['CustomNormal']),
             Paragraph(f"<b>{ukupno_po_nalogu:.2f}</b>", styles['CustomNormal']),
         ])#type: ignore
-
         ukupno_tuzemne += rn.tuzemne_dnevnice#type: ignore
         ukupno_inozemne += rn.inozemne_dnevnice#type: ignore
         ukupno_sve += ukupno_po_nalogu
 
-    # Ukupni red
     data.append([
-        Paragraph("<b>UKUPNO ZA TJEDAN</b>", styles['CustomNormal']),
-        Paragraph("", styles['CustomNormal']),
-        Paragraph("", styles['CustomNormal']),
-        Paragraph("", styles['CustomNormal']),
+        Paragraph("<b>UKUPNO ZA TJEDAN</b>", styles['CustomNormal']), "", "", "",
         Paragraph(f"<b>{ukupno_tuzemne:.2f}</b>", styles['CustomNormal']),
         Paragraph(f"<b>{ukupno_inozemne:.2f}</b>", styles['CustomNormal']),
         Paragraph(f"<b>{ukupno_sve:.2f} €</b>", styles['CustomNormal']),
@@ -765,18 +780,11 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
     table = Table(data, colWidths=[165, 70, 70, 100, 80, 80, 95])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#dddddd')),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.black),
-        ('FONTNAME', (0,0), (-1,0), 'Arial'),
-        ('FONTSIZE', (0,0), (-1,0), 11),
-
         ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#bbbbbb')),
-        ('TEXTCOLOR', (0,-1), (-1,-1), colors.black),
-
+        ('GRID', (0,0), (-1,-1), 0.8, colors.black),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('ALIGN', (4,1), (-1,-1), 'RIGHT'),
-        ('FONTNAME', (0,1), (-1,-2), 'Arial'),
-        ('FONTSIZE', (0,1), (-1,-2), 10),
-        ('GRID', (0,0), (-1,-1), 0.8, colors.black),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('LEFTPADDING', (0,0), (-1,-1), 6),
         ('RIGHTPADDING', (0,0), (-1,-1), 6),
