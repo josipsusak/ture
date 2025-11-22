@@ -596,7 +596,7 @@ def export_vozac_pdf(request, vozac_id):
     bilanca = round(ukupno_razlika - ukupno_dnevnice - ukupno_cekanje + vozac.zaduzenje_prethodni_mjesec + vozac.uplaceno_na_banku, 2)
     elements.append(Spacer(1, 20))
     bilanca_table = Table([[Paragraph("Bilanca:", styles['BilancaLabel']),
-                            Paragraph(f"<b>{bilanca:,.2f} €</b>".replace(',', 'X').replace('.', ',').replace('X', '.'), styles['BilancaIznos'])]],
+                            Paragraph(f"<b>{bilanca:,.2f} KM</b>".replace(',', 'X').replace('.', ',').replace('X', '.'), styles['BilancaIznos'])]],
                           colWidths=[100, 100])
     bilanca_table.hAlign = 'RIGHT'
     elements.append(bilanca_table)
