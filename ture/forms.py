@@ -90,5 +90,9 @@ class RadniNalogForm(forms.ModelForm):
             'tura': 'Tura',
             'konacna_drzava': 'Konačna država',
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['tura'].queryset = Tura.objects.filter(aktivan=True)
 
         
