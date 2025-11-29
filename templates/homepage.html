@@ -125,7 +125,7 @@
 <!-- =================================== -->
 <!-- 2. POPIS RADNIH NALOGA -->
 <!-- =================================== -->
-<h2 class="mb-4 mt-5">Popis radnih naloga</h2>
+<h2 class="mb-4 mt-5">Popis putnih naloga</h2>
 
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <form method="get" class="d-flex align-items-end flex-wrap gap-3 mb-0" id="form-rn">
@@ -186,7 +186,7 @@
     </form>
 
     <a href="{% url 'dodaj_radni_nalog' %}" class="btn btn-danger btn-sm">
-        <i class="bi bi-plus-lg"></i> Dodaj radni nalog
+        <i class="bi bi-plus-lg"></i> Dodaj putni nalog
     </a>
 </div>
 
@@ -196,7 +196,7 @@
         <thead class="table-light">
             <tr>
                 <th>Vozač</th>
-                <th>Radni nalog</th>
+                <th>Putni nalog</th>
                 <th>Relacija</th>
                 <th>Tuzemne</th>
                 <th>Inozemne</th>
@@ -209,7 +209,7 @@
             {% for rn in radni_nalozi %}
             <tr>
                 <td>{{ rn.tura.vozac.ime }}</td>
-                <td><a href="{% url 'radni_nalog_detail' rn.id %}">#{{ rn.id }}</a></td>
+                <td>{{ rn.tura.broj_putnog_naloga }}</td>
                 <td>{{ rn.tura.relacija }}</td>
                 <td class="text-success fw-bold">{{ rn.tuzemne_dnevnice|floatformat:2 }} €</td>
                 <td class="text-info fw-bold">{{ rn.inozemne_dnevnice|floatformat:2 }} €</td>
@@ -233,7 +233,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="text-center text-muted py-4">Nema radnih naloga za odabrani period.</td>
+                <td colspan="8" class="text-center text-muted py-4">Nema putnih naloga za odabrani period.</td>
             </tr>
             {% endfor %}
         </tbody>

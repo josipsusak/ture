@@ -669,6 +669,12 @@ def cijene_dnevnica(request):
     # --- PRIKAZ: Formatiraj iznos sa točkom i 2 decimale (za input) ---
     for c in cijene:
         c.iznos_input = f"{float(c.iznos):.2f}"  #type: ignore
+        
+    radni_nalozi = RadniNalog.objects.all() 
+    
+    for rn in radni_nalozi:
+        rn.izracun_dnevnica()
+        rn.save()
 
     return render(request, 'cijene_dnevnica.html', {
         'cijene': cijene
