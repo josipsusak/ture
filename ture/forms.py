@@ -64,11 +64,26 @@ class VozacUpdateForm(forms.ModelForm):
 class VoziloForm(forms.ModelForm):
     class Meta:
         model = Vozilo
-        fields = ['vozac', 'ime', 'vrijeme_registracije', 'servis', 'dodatne_informacije']
+        fields = ['vozac', 'ime', 'vrijeme_registracije', 'servis', 'periodicni_pregled', 'bazdar_tahografa', 'pozarni_aparati', 'tu_potvrda']
         widgets = {
             'vrijeme_registracije': forms.DateInput(attrs={'type': 'date'}),
             'servis': forms.DateInput(attrs={'type': 'date'}),
+            'periodicni_pregled': forms.DateInput(attrs={'type': 'date'}),
+            'bazdar_tahografa': forms.DateInput(attrs={'type': 'date'}),
+            'pozarni_aparati': forms.DateInput(attrs={'type': 'date'}),
+            'tu_potvrda': forms.DateInput(attrs={'type': 'date'}),
         }
+        labels = {
+            'vozac': 'Vozač',
+            'ime': 'Ime vozila',
+            'vrijeme_registracije': 'Vrijeme registracije',
+            'servis': 'Servis',
+            'periodicni_pregled': 'Periodični pregled',
+            'bazdar_tahografa': 'Baždarenje tahografa',
+            'pozarni_aparati': 'Požarni aparati',
+            'tu_potvrda': 'TU potvrda',
+        }
+ 
 
 class NaputakForm(forms.ModelForm):
     class Meta:

@@ -18,8 +18,12 @@
             <tr>
                 <th>Ime</th>
                 <th>Vozač</th>
-                <th>Vrijeme registracije</th>
+                <th>Registracija</th>
                 <th>Servis</th>
+                <th>Periodični pregled</th>
+                <th>Baždarenje tahografa</th>
+                <th>Požarni aparati</th>
+                <th>TU potvrda</th>
                 <th>Akcije</th>
             </tr>
         </thead>
@@ -36,9 +40,13 @@
                 </td>
                 <td>{{ v.vrijeme_registracije }}</td>
                 <td>{{ v.servis }}</td>
-                <td>
-                    <a href="{% url 'uredi_vozilo' v.id %}" class="btn btn-sm btn-warning">Uredi</a>
-                    <a href="{% url 'obrisi_vozilo' v.id %}" class="btn btn-sm btn-danger ms-1">Obriši</a>
+                <td>{{ v.periodicni_pregled }}</td>
+                <td>{{ v.bazdar_tahografa }}</td>
+                <td>{{ v.pozarni_aparati }}</td>
+                <td>{{ v.tu_potvrda }}</td>
+                <td class="d-flex flex-column gap-1">
+                    <a href="{% url 'uredi_vozilo' v.id %}" class="btn btn-sm btn-warning w-100">Uredi</a>
+                    <a href="{% url 'obrisi_vozilo' v.id %}" class="btn btn-sm btn-danger w-100">Obriši</a>
                 </td>
             </tr>
             {% empty %}

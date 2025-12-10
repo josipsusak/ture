@@ -47,7 +47,12 @@ class Vozilo(models.Model):
     ime = models.CharField(max_length=100)
     vrijeme_registracije = models.DateField()
     servis = models.DateField()
+    periodicni_pregled = models.DateField(blank=True, null=True)
+    bazdar_tahografa = models.DateField(blank=True, null=True)
+    pozarni_aparati = models.DateField(blank=True, null=True)
+    tu_potvrda = models.DateField(blank=True, null=True)
     dodatne_informacije = models.TextField(blank=True, null=True)
+    
 
     def __str__(self):
         return f"{self.ime} ({self.vozac.ime if self.vozac else 'bez vozača'})"
@@ -63,6 +68,38 @@ class Vozilo(models.Model):
 
     def servis_istekao(self):
         return self.servis < date.today()
+    
+    def periodicni_pregled_blizu(self):
+        if self.periodicni_pregled:
+            return 0 <= (self.periodicni_pregled - date.today()).days <= 14
+        return False
+
+    def periodicni_pregled_istekao(self):
+        return self.periodicni_pregled and self.periodicni_pregled < date.today()
+
+    def bazdarenje_blizu(self):
+        if self.bazdar_tahografa:
+            return 0 <= (self.bazdar_tahografa - date.today()).days <= 14
+        return False
+
+    def bazdarenje_isteklo(self):
+        return self.bazdar_tahografa and self.bazdar_tahografa < date.today()
+
+    def pozarni_aparati_blizu(self):
+        if self.pozarni_aparati:
+            return 0 <= (self.pozarni_aparati - date.today()).days <= 14
+        return False
+
+    def pozarni_aparati_istekli(self):
+        return self.pozarni_aparati and self.pozarni_aparati < date.today()
+
+    def tu_potvrda_blizu(self):
+        if self.tu_potvrda:
+            return 0 <= (self.tu_potvrda - date.today()).days <= 14
+        return False
+
+    def tu_potvrda_istekla(self):
+        return self.tu_potvrda and self.tu_potvrda < date.today()
 
 class Naputak(models.Model):
     vozilo = models.ForeignKey('Vozilo', on_delete=models.CASCADE, related_name='naputci')

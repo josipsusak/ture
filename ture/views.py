@@ -87,11 +87,26 @@ def homepage(request):
         if v.servis_blizu():
             upozorenja.append(f"🔧 Vozilo {v.ime} ima servis {v.servis.strftime('%d.%m.%Y')}.")
         
-        # nove provjere za istekle datume
         if v.registracija_istekla():
             upozorenja.append(f"❌ Vozilu {v.ime} je istekla registracija {v.vrijeme_registracije.strftime('%d.%m.%Y')}!")
         if v.servis_istekao():
             upozorenja.append(f"❌ Vozilo {v.ime} je prošao servis {v.servis.strftime('%d.%m.%Y')}!")
+        if v.periodicni_pregled_blizu():
+            upozorenja.append(f"📋 Vozilu {v.ime} uskoro ističe periodični pregled ({v.periodicni_pregled.strftime('%d.%m.%Y')}).")
+        if v.periodicni_pregled_istekao():
+            upozorenja.append(f"❌ Vozilu {v.ime} je istekao periodični pregled {v.periodicni_pregled.strftime('%d.%m.%Y')}!")
+        if v.bazdarenje_blizu():
+            upozorenja.append(f"⏱️ Vozilu {v.ime} uskoro ističe baždarenje tahografa ({v.bazdar_tahografa.strftime('%d.%m.%Y')}).")
+        if v.bazdarenje_isteklo():
+            upozorenja.append(f"❌ Vozilu {v.ime} je isteklo baždarenje tahografa {v.bazdar_tahografa.strftime('%d.%m.%Y')}!")
+        if v.pozarni_aparati_blizu():
+            upozorenja.append(f"🔥 Vozilu {v.ime} uskoro ističe pregled požarnih aparata ({v.pozarni_aparati.strftime('%d.%m.%Y')}).")
+        if v.pozarni_aparati_istekli():
+            upozorenja.append(f"❌ Vozilu {v.ime} su istekli požarni aparati {v.pozarni_aparati.strftime('%d.%m.%Y')}!")
+        if v.tu_potvrda_blizu():
+            upozorenja.append(f"📄 Vozilu {v.ime} uskoro ističe TU potvrda ({v.tu_potvrda.strftime('%d.%m.%Y')}).")
+        if v.tu_potvrda_istekla():
+            upozorenja.append(f"❌ Vozilu {v.ime} je istekla TU potvrda {v.tu_potvrda.strftime('%d.%m.%Y')}!")
             
     # Dohvati GET parametre
     # === FILTERI ZA RADNE NALOGE ===
