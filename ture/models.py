@@ -205,8 +205,8 @@ class RadniNalog(models.Model):
         cij_ino = cijene.get(self.konacna_drzava, 50)
         cij_tuz = cijene.get('BiH', 12.5)
 
-        self.inozemne_dnevnice = round(inozemne_dnev * cij_ino, 2)
-        self.tuzemne_dnevnice = round(tuzemne_dnev * cij_tuz, 2)
+        self.inozemne_dnevnice = round(inozemne_dnev * cij_ino * 1.95583, 2)
+        self.tuzemne_dnevnice = round(tuzemne_dnev * cij_tuz * 1.95583, 2)
 
 
     def save(self, *args, **kwargs):
