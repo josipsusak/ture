@@ -43,12 +43,31 @@
 
     <!-- Filtriranje tura -->
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-secondary text-white">
+        <div class="card-header bg-dark text-white">
             <h5 class="mb-0">Filtriranje tura</h5>
         </div>
         <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-4">
+            <form method="get" class="row g-12">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Logo za firmu:</label>
+                    <div class="d-flex gap-4 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="logo" id="logo_ihlogistika" value="ihlogistika" 
+                                {% if request.GET.logo != 'ihtransport' %}checked{% endif %}>
+                            <label class="form-check-label" for="logo_ihlogistika">
+                                IHLogistika
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="logo" id="logo_ihtransport" value="ihtransport"
+                                {% if request.GET.logo == 'ihtransport' %}checked{% endif %}>
+                            <label class="form-check-label" for="logo_ihtransport">
+                                IH Transport
+                            </label>
+                        </div>
+                    </div>
+                 </div>
+                 <div class="col-md-1"> 
                     <label for="mjesec" class="form-label">Mjesec</label>
                     <select name="mjesec" id="mjesec" class="form-select">
                         <option value="">-- Sve ture --</option>
@@ -60,7 +79,7 @@
                     </select>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="godina" class="form-label">Godina</label>
                     <input type="number" name="godina" id="godina"
                            value="{{ odabrana_godina|default:trenutna_godina }}"
@@ -87,17 +106,17 @@
 
             <div class="d-flex align-items-center">
 
-                {% if odabrani_mjesec and odabrana_godina %}
-                    <a href="{% url 'export_vozac_pdf' vozac.id %}?mjesec={{ odabrani_mjesec }}&godina={{ odabrana_godina }}"
-                    class="btn btn-warning btn-sm ms-3">
-                        Eksportiraj mjesec u PDF
-                    </a>
-                {% else %}
-                    <button class="btn btn-warning btn-sm ms-3" disabled>
-                        Eksportiraj mjesec u PDF
-                    </button>
-                    <small class="text-light ms-2 opacity-75">Odaberi mjesec i godinu</small>
-                {% endif %}
+            {% if odabrani_mjesec and odabrana_godina %}
+                <a href="#" onclick="exportWithLogo('{% url 'export_vozac_pdf' vozac.id %}?mjesec={{ odabrani_mjesec }}&godina={{ odabrana_godina }}')"
+                class="btn btn-warning btn-sm ms-3">
+                    Eksportiraj mjesec u PDF
+                </a>
+            {% else %}
+                <button class="btn btn-warning btn-sm ms-3" disabled>
+                    Eksportiraj mjesec u PDF
+                </button>
+                <small class="text-light ms-2 opacity-75">Odaberi mjesec i godinu</small>
+            {% endif %}
 
             </div>
         </div>
@@ -194,7 +213,7 @@
     </div>
 
     <div class="card shadow-sm mb-4">
-    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Radni nalozi vozača</h5>
         <div>
             <span class="badge bg-light text-dark fs-6 me-3">
@@ -258,5 +277,21 @@
     </div>
 
 </div>
+
+<script>
+function exportWithLogo(baseUrl) {
+    const selectedLogo = document.querySelector('input[name="logo"]:checked');
+    let logoParam = '';
+    if (selectedLogo && selectedLogo.value) {
+        logoParam = '&logo=' + selectedLogo.value;
+    }
+    
+    // Dodaj logo parametar na URL
+    const finalUrl = baseUrl + logoParam;
+    
+    // Otvori u novom tabu ili preusmjeri
+    window.open(finalUrl, '_blank');
+}
+</script>
 
 {% endblock %}

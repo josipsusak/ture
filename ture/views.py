@@ -531,7 +531,7 @@ def export_vozac_pdf(request, vozac_id):
         return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="Ture_{vozac.ime}_{naziv_perioda.replace(" ", "_")}.pdf"'
+    response['Content-Disposition'] = f'inline; filename="Ture_{vozac.ime}_{naziv_perioda.replace(" ", "_")}.pdf"'
 
     font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Arial.ttf')
     pdfmetrics.registerFont(TTFont('Arial', font_path))
@@ -543,36 +543,27 @@ def export_vozac_pdf(request, vozac_id):
     styles.add(ParagraphStyle(name='CustomNormal', fontName='Arial', fontSize=10, leading=12))
     styles.add(ParagraphStyle(name='BilancaLabel', fontName='Arial', fontSize=12))
     styles.add(ParagraphStyle(name='BilancaIznos', fontName='Arial', fontSize=14))
+    
+    # Odabir loga – default je ihlogistika
+    logo_choice = request.GET.get('logo', 'ihlogistika')
 
-    # === DVA LOGA – GORNJI LIJEVI KUT, MALI, LIJEVO PORAVNATI ===
-    logo1_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo1.png')
-    logo2_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo2.png')
+    # Definiraj putanje do loga
+    if logo_choice == 'ihtransport':
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo1.jpg')
+    else:
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo2.jpg')
 
-    logos = []
-    if os.path.exists(logo1_path):
-        img1 = Image(logo1_path, width=75, height=48)
-        img1.hAlign = 'LEFT'
-        logos.append(img1)
-    if os.path.exists(logo2_path):
-        img2 = Image(logo2_path, width=75, height=48)
-        img2.hAlign = 'LEFT'
-        logos.append(img2)
 
-    if logos:
-        if len(logos) == 2:
-            logo_table = Table([[logos[0], logos[1]]], colWidths=[85, 85])
-        else:
-            logo_table = Table([[logos[0]]], colWidths=[85])
-        
-        logo_table.setStyle(TableStyle([
-            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('RIGHTPADDING', (0,0), (-1,-1), 40),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-        ]))
-        elements.append(KeepInFrame(600, 100, [logo_table], hAlign='LEFT', vAlign='TOP'))
-        elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 8))
+
+    if os.path.exists(logo_path):
+        try:
+            logo_img = Image(logo_path, width=120, height=60)  # prilagodi dimenzije po potrebi
+            logo_img.hAlign = 'LEFT'
+            elements.append(logo_img)
+            elements.append(Spacer(1, 12))
+        except Exception:
+            pass
     else:
         elements.append(Spacer(1, 20))
 
@@ -758,8 +749,8 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
     elements = []
 
     # === DVA LOGA – GORNJI LIJEVI KUT ===
-    logo1_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo1.png')
-    logo2_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo2.png')
+    logo1_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo1.jpg')
+    logo2_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo2.jpg')
 
     logos = []
     if os.path.exists(logo1_path):
@@ -846,6 +837,15 @@ def export_naputci_pdf(request, vozilo_id):
     vozilo = get_object_or_404(Vozilo, id=vozilo_id)
     godina = int(request.GET.get('godina', datetime.now().year))
     
+    # ─── Odabir loga ────────────────────────────────────────────────
+    logo_choice = request.GET.get('logo', 'ihlogistika')  # default: ihlogistika
+
+    if logo_choice == 'ihtransport':
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo1.jpg')
+    else:
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo2.jpg')
+
+    
     # Filtriraj naputke za vozilo i godinu
     naputci = Naputak.objects.filter(vozilo=vozilo, datum__year=godina).order_by('datum')
     
@@ -866,6 +866,16 @@ def export_naputci_pdf(request, vozilo_id):
     styles.add(ParagraphStyle(name='CustomHeading', fontName='Arial', fontSize=14, leading=16, alignment=1))  # Centrirano
     
     elements = []
+    
+    if logo_path:
+        try:
+            logo_img = Image(logo_path, width=120, height=60)  # prilagodi dimenzije
+            logo_img.hAlign = 'LEFT'
+            elements.append(logo_img)
+            elements.append(Spacer(1, 12))
+        except Exception as e:
+            # Ako slika ne može biti učitana – preskoči ili logiraj
+            pass
     
     # Naslov
     elements.append(Paragraph(f"Naputci za vozilo: {vozilo.ime} u {godina}. godini", styles['CustomHeading']))
