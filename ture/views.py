@@ -264,12 +264,28 @@ def unos_vozaca(request):
 def profil_vozaca(request, vozac_id):
     vozac = get_object_or_404(Vozac, id=vozac_id)
     
-    mjesec = request.GET.get('mjesec')
-    godina = request.GET.get('godina')
+    mjesec = parse_int(request.GET.get('mjesec'), datetime.now().month) if request.GET.get('mjesec') else None
+    godina = parse_int(request.GET.get('godina'), datetime.now().year)
     
     # === NOVO: TJEDAN FILTER ===
-    tjedan_rn = parse_int(request.GET.get('tjedan_rn'))
-    godina_tjedan_rn = parse_int(request.GET.get('godina_tjedan_rn'))
+    iso = datetime.now().isocalendar()
+    
+    tjedan_rn_str = request.GET.get('tjedan_rn', '').strip()
+    godina_tjedan_rn_str = request.GET.get('godina_tjedan_rn', '').strip()
+
+    # Ako je parametar prazan ili 'None' → ne filtriramo po tjednu
+    tjedan_rn = None
+    godina_tjedan_rn = None
+
+    if tjedan_rn_str and tjedan_rn_str.lower() != 'none':
+        tjedan_rn = parse_int(tjedan_rn_str)
+
+    if godina_tjedan_rn_str and godina_tjedan_rn_str.lower() != 'none':
+        godina_tjedan_rn = parse_int(godina_tjedan_rn_str)
+
+    # Ako nema godine tjedna, a ima tjedan → fallback na tekuću ISO godinu
+    if tjedan_rn is not None and godina_tjedan_rn is None:
+        godina_tjedan_rn = iso.year
     
     if mjesec and godina:
         ture = Tura.objects.filter(
@@ -286,21 +302,25 @@ def profil_vozaca(request, vozac_id):
         ture = Tura.objects.filter(vozac=vozac).order_by('datum_polaska')
         
     radni_nalozi_vozaca = RadniNalog.objects.filter(
-        tura__vozac=vozac
+        tura__vozac=vozac,
+        tura__datum_polaska__year=godina_tjedan_rn if godina_tjedan_rn else None
     ).select_related('tura').order_by('-tura__datum_polaska')
-    
-    if tjedan_rn and godina_tjedan_rn:
+
+    # Primjenjujemo tjedan filter SAMO ako imamo oba parametra
+    if tjedan_rn is not None and godina_tjedan_rn is not None:
         try:
             start = datetime(godina_tjedan_rn, 1, 4)
-            start -= timedelta(days=start.weekday())
+            start -= timedelta(days=start.weekday())          # ponedjeljak
             start_date = start + timedelta(weeks=tjedan_rn - 1)
             end_date = start_date + timedelta(days=6)
+
             radni_nalozi_vozaca = radni_nalozi_vozaca.filter(
                 tura__datum_polaska__date__gte=start_date.date(),
                 tura__datum_polaska__date__lte=end_date.date()
             )
-        except:
-            pass  # neispravni parametri
+        except (ValueError, OverflowError):
+            # Neispravan datum → ne filtriramo (ili možeš dodati poruku)
+            pass 
         
     if request.method == 'POST':
         form = VozacUpdateForm(request.POST, instance=vozac)
@@ -411,6 +431,8 @@ def popis_vozila(request):
 def detalji_vozila(request, vozilo_id):
     vozilo = get_object_or_404(Vozilo, id=vozilo_id)
     naputci = vozilo.naputci.all().order_by('-datum') # type: ignore
+    trenutna_godina = datetime.now().year
+    godine = range(trenutna_godina - 5, trenutna_godina + 1)
 
     if request.method == 'POST':
         form = NaputakForm(request.POST)
@@ -426,6 +448,8 @@ def detalji_vozila(request, vozilo_id):
         'vozilo': vozilo,
         'naputci': naputci,
         'form': form,
+        'godine': godine, 
+        'trenutna_godina': trenutna_godina
     })
 
 @login_required
@@ -814,5 +838,71 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
     ]))
     elements.append(table)
 
+    doc.build(elements)
+    return response
+
+@login_required
+def export_naputci_pdf(request, vozilo_id):
+    vozilo = get_object_or_404(Vozilo, id=vozilo_id)
+    godina = int(request.GET.get('godina', datetime.now().year))
+    
+    # Filtriraj naputke za vozilo i godinu
+    naputci = Naputak.objects.filter(vozilo=vozilo, datum__year=godina).order_by('datum')
+    
+    # Postavke PDF-a
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="naputci_{vozilo.ime}_{godina}.pdf"'
+    
+    # Kreiraj PDF dokument (landscape za širu tablicu)
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    
+    # Registriraj font (za hrvatske znakove, preuzeto iz vašeg postojećeg koda)
+    font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Arial.ttf')  
+    pdfmetrics.registerFont(TTFont('Arial', font_path))
+    
+    # Stilovi (kopirano iz vašeg export_vozacev_tjedan_pdf ili slično)
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='CustomNormal', fontName='Arial', fontSize=10, leading=12))
+    styles.add(ParagraphStyle(name='CustomHeading', fontName='Arial', fontSize=14, leading=16, alignment=1))  # Centrirano
+    
+    elements = []
+    
+    # Naslov
+    elements.append(Paragraph(f"Naputci za vozilo: {vozilo.ime} u {godina}. godini", styles['CustomHeading']))
+    elements.append(Spacer(1, 12))
+    
+    # Podaci za tablicu
+    data = [['Datum', 'Sadržaj']]  # Header
+    
+    if not naputci.exists():
+        data.append(['Nema naputaka za ovu godinu.', ''])
+    else:
+        for naputak in naputci:
+            data.append([
+                naputak.datum.strftime('%d.%m.%Y %H:%M'),
+                Paragraph(naputak.sadrzaj, styles['CustomNormal'])  # Omogućuje wrap teksta
+            ])
+    
+    # Tablica
+    table = Table(data, colWidths=[150, 500])  # Šire za sadržaj
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dddddd')),
+        ('GRID', (0, 0), (-1, -1), 0.8, colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Arial'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    
+    elements.append(table)
+    
+    # Footer (opcionalno)
+    elements.append(Spacer(1, 24))
+    elements.append(Paragraph(f"Generirano: {datetime.now().strftime('%d.%m.%Y %H:%M')}", styles['CustomNormal']))
+    
     doc.build(elements)
     return response

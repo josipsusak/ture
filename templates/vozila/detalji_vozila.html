@@ -56,6 +56,22 @@
             {% else %}
                 <p>Nema naputaka.</p>
             {% endif %}
+
+            <!-- Export PDF sekcija -->
+            <div class="mt-4">
+                <h5>Export PDF naputaka </h5>
+                <form method="get" action="{% url 'export_naputci_pdf' vozilo.id %}" class="d-flex align-items-end gap-3">
+                    <div class="form-group">
+                        <label for="godina">Odaberi godinu:</label>
+                        <select name="godina" id="godina" class="form-select">
+                            {% for g in godine %}
+                                <option value="{{ g }}" {% if g == trenutna_godina %}selected{% endif %}>{{ g }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">📄 Export PDF</button>
+                </form>
+            </div>
         </div>
     </div>
 
