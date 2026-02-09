@@ -4,12 +4,13 @@ from .models import Tura, Vozac, Vozilo, Naputak, RadniNalog
 class VozacForm(forms.ModelForm):
     class Meta:
         model = Vozac
-        fields = ['ime','zaduzenje_prethodni_mjesec', 'uplaceno_na_banku', 'postotak']
+        fields = ['ime','zaduzenje_prethodni_mjesec', 'uplaceno_na_banku', 'postotak', 'valuta']
         labels = {
             'ime': 'Ime vozača',
             'zaduzenje_prethodni_mjesec': 'Zaduženje za prošli mjesec',
             'uplaceno_na_banku': 'Uplaćeno na banku za prošli mjesec',
             'postotak': 'Postotak vozača',
+            'valuta': 'Valuta vozača',
         }
 
 class TuraForm(forms.ModelForm):
@@ -54,11 +55,12 @@ class TuraForm(forms.ModelForm):
 class VozacUpdateForm(forms.ModelForm):
     class Meta:
         model = Vozac
-        fields = ['zaduzenje_prethodni_mjesec', 'uplaceno_na_banku', 'postotak']
+        fields = ['zaduzenje_prethodni_mjesec', 'uplaceno_na_banku', 'postotak', 'valuta']
         labels = {
             'zaduzenje_prethodni_mjesec': 'Zaduženje za prošli mjesec',
             'uplaceno_na_banku': 'Uplaćeno na banku za prošli mjesec',
             'postotak': 'Postotak vozača',
+            'valuta': 'Valuta vozača',
         }
         
 class VoziloForm(forms.ModelForm):
