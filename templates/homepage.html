@@ -211,9 +211,9 @@
                 <td>{{ rn.tura.vozac.ime }}</td>
                 <td>{{ rn.tura.broj_putnog_naloga }}</td>
                 <td>{{ rn.tura.relacija }}</td>
-                <td class="text-success fw-bold">{{ rn.tuzemne_dnevnice|floatformat:2 }} KM</td>
-                <td class="text-info fw-bold">{{ rn.inozemne_dnevnice|floatformat:2 }} KM</td>
-                <td class="fw-bold">{{ rn.tuzemne_dnevnice|add:rn.inozemne_dnevnice|floatformat:2 }} KM</td>
+                <td class="text-success fw-bold">{{ rn.tuzemne_dnevnice|floatformat:2 }} {{ rn.tura.vozac.valuta }}</td>
+                <td class="text-info fw-bold">{{ rn.inozemne_dnevnice|floatformat:2 }} {{ rn.tura.vozac.valuta }}</td>
+                <td class="fw-bold">{{ rn.tuzemne_dnevnice|add:rn.inozemne_dnevnice|floatformat:2 }} {{ rn.tura.vozac.valuta }}</td>
                 <td><span class="badge bg-warning text-dark">{{ rn.konacna_drzava }}</span></td>
                 <td>
                     <div class="d-flex gap-1">

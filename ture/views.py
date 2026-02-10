@@ -626,7 +626,7 @@ def export_vozac_pdf(request, vozac_id):
     bilanca = round(ukupno_razlika - ukupno_dnevnice - ukupno_cekanje + vozac.zaduzenje_prethodni_mjesec + vozac.uplaceno_na_banku, 2)
     elements.append(Spacer(1, 20))
     bilanca_table = Table([[Paragraph("Bilanca:", styles['BilancaLabel']),
-                            Paragraph(f"<b>{bilanca:,.2f} KM</b>".replace(',', 'X').replace('.', ',').replace('X', '.'), styles['BilancaIznos'])]],
+                            Paragraph(f"<b>{bilanca:,.2f} {vozac.valuta}</b>".replace(',', 'X').replace('.', ',').replace('X', '.'), styles['BilancaIznos'])]],
                           colWidths=[100, 100])
     bilanca_table.hAlign = 'RIGHT'
     elements.append(bilanca_table)
@@ -787,7 +787,7 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
                               ParagraphStyle(name='Sub', fontName='Arial', fontSize=14, alignment=1, spaceAfter=25)))
 
     # Tablica
-    data = [["Relacija", "Polazak", "Povratak", "Država", "Tuzemne (€)", "Inozemne (€)", "Ukupno (€)"]]
+    data = [["Relacija", "Polazak", "Povratak", "Država", f"Tuzemne ({vozac.valuta})", f"Inozemne ({vozac.valuta})", f"Ukupno ({vozac.valuta})"]]
     ukupno_tuzemne = ukupno_inozemne = ukupno_sve = 0
 
     for rn in radni_nalozi:
@@ -810,7 +810,7 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         Paragraph("<b>UKUPNO ZA TJEDAN</b>", styles['CustomNormal']), "", "", "",
         Paragraph(f"<b>{ukupno_tuzemne:.2f}</b>", styles['CustomNormal']),
         Paragraph(f"<b>{ukupno_inozemne:.2f}</b>", styles['CustomNormal']),
-        Paragraph(f"<b>{ukupno_sve:.2f} €</b>", styles['CustomNormal']),
+        Paragraph(f"<b>{ukupno_sve:.2f} {vozac.valuta}</b>", styles['CustomNormal']),
     ])#type: ignore
 
     table = Table(data, colWidths=[165, 70, 70, 100, 80, 80, 95])

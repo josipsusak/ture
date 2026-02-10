@@ -255,9 +255,9 @@
                             <td>{{ rn.tura.relacija }}</td>
                             <td>{{ rn.tura.datum_polaska|date:"d.m.Y" }}</td>
                             <td>{{ rn.tura.datum_dolaska|date:"d.m.Y" }}</td>
-                            <td class="text-success fw-bold">{{ rn.tuzemne_dnevnice|floatformat:2 }} KM</td>
-                            <td class="text-info fw-bold">{{ rn.inozemne_dnevnice|floatformat:2 }} KM</td>
-                            <td class="fw-bold">{{ rn.tuzemne_dnevnice|add:rn.inozemne_dnevnice|floatformat:2 }} KM</td>
+                            <td class="text-success fw-bold">{{ rn.tuzemne_dnevnice|floatformat:2 }} {{ rn.tura.vozac.valuta }}</td>
+                            <td class="text-info fw-bold">{{ rn.inozemne_dnevnice|floatformat:2 }} {{ rn.tura.vozac.valuta }}</td>
+                            <td class="fw-bold">{{ rn.tuzemne_dnevnice|add:rn.inozemne_dnevnice|floatformat:2 }} {{ rn.tura.vozac.valuta }}</td>
                             <td>
                                 <span class="badge bg-warning text-dark">{{ rn.konacna_drzava }}</span>
                             </td>
