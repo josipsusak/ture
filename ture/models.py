@@ -220,8 +220,8 @@ class RadniNalog(models.Model):
             self.inozemne_dnevnice = round(inozemne_dnev * cij_ino, 2)
             self.tuzemne_dnevnice = round(tuzemne_dnev * cij_tuz, 2)
         else:
-            self.inozemne_dnevnice = round(inozemne_dnev * cij_ino * 1.95583, 2)
-            self.tuzemne_dnevnice = round(tuzemne_dnev * cij_tuz * 1.95583, 2)
+            self.inozemne_dnevnice = round(inozemne_dnev * cij_ino , 2) #* 1.95583
+            self.tuzemne_dnevnice = round(tuzemne_dnev * cij_tuz , 2) #* 1.95583
 
 
     def save(self, *args, **kwargs):
