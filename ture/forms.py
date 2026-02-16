@@ -102,10 +102,15 @@ class NaputakForm(forms.ModelForm):
 class RadniNalogForm(forms.ModelForm):
     class Meta:
         model = RadniNalog
-        fields = ['tura', 'konacna_drzava']
+        fields = ['tura', 'konacna_drzava', 'papiri', 'terminali', 'cestarine', 'ostali_troskovi', 'izdaci']
         labels = {
             'tura': 'Tura',
             'konacna_drzava': 'Konačna država',
+            'papiri': 'Papiri',
+            'terminali': 'Terminali',
+            'cestarine': 'Cestarine',
+            'ostali_troskovi': 'Ostali troškovi',
+            'izdaci': 'Izdaci',
         }
     
     def __init__(self, *args, **kwargs):

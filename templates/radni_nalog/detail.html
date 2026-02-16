@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %} {# Ako koristiš custom CSS #}
+{% load static %} 
 
 {% block content %}
 <div class="container py-4">
@@ -37,13 +37,13 @@
                             <th scope="row" class="text-muted bg-light">
                                 <i class="bi bi-house-door text-success me-2"></i>Tuzemne dnevnice
                             </th>
-                            <td class="text-success fw-bold">{{ radni_nalog.tuzemne_dnevnice }} KM</td>
+                            <td class="text-success fw-bold">{{ radni_nalog.tuzemne_dnevnice }} {{ radni_nalog.tura.vozac.valuta }}</td>
                         </tr>
                         <tr>
                             <th scope="row" class="text-muted bg-light">
                                 <i class="bi bi-globe text-info me-2"></i>Inozemne dnevnice
                             </th>
-                            <td class="text-info fw-bold">{{ radni_nalog.inozemne_dnevnice }} KM</td>
+                            <td class="text-info fw-bold">{{ radni_nalog.inozemne_dnevnice }} {{ radni_nalog.tura.vozac.valuta }}</td>
                         </tr>
                         <tr>
                             <th scope="row" class="text-muted bg-light">
@@ -82,7 +82,7 @@
                                 <i class="bi bi-cash-stack text-white me-2"></i>UKUPNO
                             </th>
                             <td class="bg-primary text-white fw-bold fs-5">
-                                {{ radni_nalog.tuzemne_dnevnice|add:radni_nalog.inozemne_dnevnice }} KM
+                                {{ radni_nalog.tuzemne_dnevnice|add:radni_nalog.inozemne_dnevnice }} {{ radni_nalog.tura.vozac.valuta }}
                             </td>
                         </tr>
                     </tbody>

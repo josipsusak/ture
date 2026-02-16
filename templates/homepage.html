@@ -202,6 +202,11 @@
                 <th>Inozemne</th>
                 <th>Ukupno</th>
                 <th>Država</th>
+                <th>Papiri</th>
+                <th>Terminali</th>
+                <th>Cestarine</th>
+                <th>Ostali troškovi</th>
+                <th>Izdaci</th>
                 <th>Akcije</th>
             </tr>
         </thead>
@@ -215,6 +220,12 @@
                 <td class="text-info fw-bold">{{ rn.inozemne_dnevnice|floatformat:2 }} {{ rn.tura.vozac.valuta }}</td>
                 <td class="fw-bold">{{ rn.tuzemne_dnevnice|add:rn.inozemne_dnevnice|floatformat:2 }} {{ rn.tura.vozac.valuta }}</td>
                 <td><span class="badge bg-warning text-dark">{{ rn.konacna_drzava }}</span></td>
+                <td>{{ rn.papiri|floatformat:2|default:"0.00" }} {{ rn.tura.vozac.valuta }}</td>
+                <td>{{ rn.terminali|floatformat:2|default:"0.00" }} {{ rn.tura.vozac.valuta }}</td>
+                <td>{{ rn.cestarine|floatformat:2|default:"0.00" }} {{ rn.tura.vozac.valuta }}</td>
+
+                <td>{{ rn.ostali_troskovi|default:"—" }}</td>
+                <td>{{ rn.izdaci|default:"—" }}</td>
                 <td>
                     <div class="d-flex gap-1">
                         <a href="{% url 'radni_nalog_detail' rn.id %}" class="btn btn-sm btn-primary">Prikaži</a>

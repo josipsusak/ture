@@ -133,6 +133,11 @@ class RadniNalog(models.Model):
     tuzemne_dnevnice = models.FloatField(blank=True, null=True)
     inozemne_dnevnice = models.FloatField(blank=True, null=True)
     aktivan = models.BooleanField(default=True)  
+    papiri = models.FloatField(blank=True, null=True)
+    terminali = models.FloatField(blank=True, null=True)
+    cestarine = models.FloatField(blank=True, null=True)
+    ostali_troskovi = models.TextField(blank=True, null=True)
+    izdaci = models.TextField(blank=True, null=True)
     
     def clean(self):
         """

@@ -15,6 +15,9 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle# type: igno
 from reportlab.lib import colors# type: ignore
 from .models import Tura, Vozac, Vozilo, Naputak, RadniNalog, osvjezi_radni_nalog, CijenaDnevnica
 from .forms import TuraForm, VozacForm, VozacUpdateForm, VoziloForm, NaputakForm, RadniNalogForm
+from openpyxl import load_workbook
+from config.settings import BASE_DIR
+from pathlib import Path
 
 def parse_int(value, default=None):
     if value in (None, '', 'None'):
@@ -710,127 +713,127 @@ def cijene_dnevnica(request):
         'cijene': cijene
     })
 
-@login_required
-def export_vozacev_tjedan_pdf(request, vozac_id):
-    vozac = get_object_or_404(Vozac, id=vozac_id)
-    tjedan = parse_int(request.GET.get('tjedan_rn'))
-    godina_tjedan = parse_int(request.GET.get('godina_tjedan_rn'))
+# @login_required
+# def export_vozacev_tjedan_pdf(request, vozac_id):
+#     vozac = get_object_or_404(Vozac, id=vozac_id)
+#     tjedan = parse_int(request.GET.get('tjedan_rn'))
+#     godina_tjedan = parse_int(request.GET.get('godina_tjedan_rn'))
 
-    if not tjedan or not godina_tjedan:
-        messages.error(request, "Odaberi tjedan za eksport!")
-        return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
+#     if not tjedan or not godina_tjedan:
+#         messages.error(request, "Odaberi tjedan za eksport!")
+#         return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
 
-    try:
-        start = datetime(godina_tjedan, 1, 4)
-        start -= timedelta(days=start.weekday())
-        start_date = start + timedelta(weeks=tjedan - 1)
-        end_date = start_date + timedelta(days=6)
-    except:
-        messages.error(request, "Neispravan tjedan ili godina!")
-        return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
+#     try:
+#         start = datetime(godina_tjedan, 1, 4)
+#         start -= timedelta(days=start.weekday())
+#         start_date = start + timedelta(weeks=tjedan - 1)
+#         end_date = start_date + timedelta(days=6)
+#     except:
+#         messages.error(request, "Neispravan tjedan ili godina!")
+#         return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
 
-    radni_nalozi = RadniNalog.objects.filter(
-        tura__vozac=vozac,
-        tura__datum_polaska__date__gte=start_date.date(),
-        tura__datum_polaska__date__lte=end_date.date()
-    ).select_related('tura').order_by('tura__datum_polaska')
+#     radni_nalozi = RadniNalog.objects.filter(
+#         tura__vozac=vozac,
+#         tura__datum_polaska__date__gte=start_date.date(),
+#         tura__datum_polaska__date__lte=end_date.date()
+#     ).select_related('tura').order_by('tura__datum_polaska')
 
-    if not radni_nalozi.exists():
-        messages.info(request, f"Nema radnih naloga za tjedan {tjedan}.")
-        return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
+#     if not radni_nalozi.exists():
+#         messages.info(request, f"Nema radnih naloga za tjedan {tjedan}.")
+#         return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="RN_{vozac.ime}_Tjedan_{tjedan}_{godina_tjedan}.pdf"'
+#     response = HttpResponse(content_type='application/pdf')
+#     response['Content-Disposition'] = f'attachment; filename="RN_{vozac.ime}_Tjedan_{tjedan}_{godina_tjedan}.pdf"'
 
-    font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Arial.ttf')
-    pdfmetrics.registerFont(TTFont('Arial', font_path))
+#     font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Arial.ttf')
+#     pdfmetrics.registerFont(TTFont('Arial', font_path))
 
-    doc = SimpleDocTemplate(response, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=20, bottomMargin=30)#type: ignore
-    elements = []
+#     doc = SimpleDocTemplate(response, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=20, bottomMargin=30)#type: ignore
+#     elements = []
 
-    # === DVA LOGA – GORNJI LIJEVI KUT ===
-    logo1_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo1.jpg')
-    logo2_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo2.jpg')
+#     # === DVA LOGA – GORNJI LIJEVI KUT ===
+#     logo1_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo1.jpg')
+#     logo2_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo2.jpg')
 
-    logos = []
-    if os.path.exists(logo1_path):
-        img1 = Image(logo1_path, width=75, height=48)
-        img1.hAlign = 'LEFT'
-        logos.append(img1)
-    if os.path.exists(logo2_path):
-        img2 = Image(logo2_path, width=75, height=48)
-        img2.hAlign = 'LEFT'
-        logos.append(img2)
+#     logos = []
+#     if os.path.exists(logo1_path):
+#         img1 = Image(logo1_path, width=75, height=48)
+#         img1.hAlign = 'LEFT'
+#         logos.append(img1)
+#     if os.path.exists(logo2_path):
+#         img2 = Image(logo2_path, width=75, height=48)
+#         img2.hAlign = 'LEFT'
+#         logos.append(img2)
 
-    if logos:
-        if len(logos) == 2:
-            logo_table = Table([[logos[0], logos[1]]], colWidths=[85, 85])
-        else:
-            logo_table = Table([[logos[0]]], colWidths=[85])
+#     if logos:
+#         if len(logos) == 2:
+#             logo_table = Table([[logos[0], logos[1]]], colWidths=[85, 85])
+#         else:
+#             logo_table = Table([[logos[0]]], colWidths=[85])
         
-        logo_table.setStyle(TableStyle([
-            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('RIGHTPADDING', (0,0), (-1,-1), 40),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-        ]))
-        elements.append(KeepInFrame(600, 100, [logo_table], hAlign='LEFT', vAlign='TOP'))
-        elements.append(Spacer(1, 12))
+#         logo_table.setStyle(TableStyle([
+#             ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+#             ('VALIGN', (0,0), (-1,-1), 'TOP'),
+#             ('LEFTPADDING', (0,0), (-1,-1), 0),
+#             ('RIGHTPADDING', (0,0), (-1,-1), 40),
+#             ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+#         ]))
+#         elements.append(KeepInFrame(600, 100, [logo_table], hAlign='LEFT', vAlign='TOP'))
+#         elements.append(Spacer(1, 12))
 
-    styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name='CustomTitle', fontName='Arial', fontSize=20, alignment=1, spaceAfter=10))
-    styles.add(ParagraphStyle(name='CustomNormal', fontName='Arial', fontSize=10, leading=12))
+#     styles = getSampleStyleSheet()
+#     styles.add(ParagraphStyle(name='CustomTitle', fontName='Arial', fontSize=20, alignment=1, spaceAfter=10))
+#     styles.add(ParagraphStyle(name='CustomNormal', fontName='Arial', fontSize=10, leading=12))
 
-    elements.append(Paragraph(f"RADNI NALOZI – {vozac.ime}", styles['CustomTitle']))
-    elements.append(Paragraph(f"Tjedan {tjedan} / {godina_tjedan}  •  {start_date.strftime('%d.%m.')} – {end_date.strftime('%d.%m.%Y')}",
-                              ParagraphStyle(name='Sub', fontName='Arial', fontSize=14, alignment=1, spaceAfter=25)))
+#     elements.append(Paragraph(f"RADNI NALOZI – {vozac.ime}", styles['CustomTitle']))
+#     elements.append(Paragraph(f"Tjedan {tjedan} / {godina_tjedan}  •  {start_date.strftime('%d.%m.')} – {end_date.strftime('%d.%m.%Y')}",
+#                               ParagraphStyle(name='Sub', fontName='Arial', fontSize=14, alignment=1, spaceAfter=25)))
 
-    # Tablica
-    data = [["Relacija", "Polazak", "Povratak", "Država", f"Tuzemne ({vozac.valuta})", f"Inozemne ({vozac.valuta})", f"Ukupno ({vozac.valuta})"]]
-    ukupno_tuzemne = ukupno_inozemne = ukupno_sve = 0
+#     # Tablica
+#     data = [["Relacija", "Polazak", "Povratak", "Država", f"Tuzemne ({vozac.valuta})", f"Inozemne ({vozac.valuta})", f"Ukupno ({vozac.valuta})"]]
+#     ukupno_tuzemne = ukupno_inozemne = ukupno_sve = 0
 
-    for rn in radni_nalozi:
-        tura = rn.tura
-        ukupno_po_nalogu = rn.tuzemne_dnevnice + rn.inozemne_dnevnice#type: ignore
-        data.append([
-            Paragraph(tura.relacija or "", styles['CustomNormal']),
-            Paragraph(tura.datum_polaska.strftime('%d.%m.') if tura.datum_polaska else "", styles['CustomNormal']),
-            Paragraph(tura.datum_dolaska.strftime('%d.%m.') if tura.datum_dolaska else "", styles['CustomNormal']),
-            Paragraph(rn.konacna_drzava or "", styles['CustomNormal']),
-            Paragraph(f"{rn.tuzemne_dnevnice:.2f}", styles['CustomNormal']),
-            Paragraph(f"{rn.inozemne_dnevnice:.2f}", styles['CustomNormal']),
-            Paragraph(f"<b>{ukupno_po_nalogu:.2f}</b>", styles['CustomNormal']),
-        ])#type: ignore
-        ukupno_tuzemne += rn.tuzemne_dnevnice#type: ignore
-        ukupno_inozemne += rn.inozemne_dnevnice#type: ignore
-        ukupno_sve += ukupno_po_nalogu
+#     for rn in radni_nalozi:
+#         tura = rn.tura
+#         ukupno_po_nalogu = rn.tuzemne_dnevnice + rn.inozemne_dnevnice#type: ignore
+#         data.append([
+#             Paragraph(tura.relacija or "", styles['CustomNormal']),
+#             Paragraph(tura.datum_polaska.strftime('%d.%m.') if tura.datum_polaska else "", styles['CustomNormal']),
+#             Paragraph(tura.datum_dolaska.strftime('%d.%m.') if tura.datum_dolaska else "", styles['CustomNormal']),
+#             Paragraph(rn.konacna_drzava or "", styles['CustomNormal']),
+#             Paragraph(f"{rn.tuzemne_dnevnice:.2f}", styles['CustomNormal']),
+#             Paragraph(f"{rn.inozemne_dnevnice:.2f}", styles['CustomNormal']),
+#             Paragraph(f"<b>{ukupno_po_nalogu:.2f}</b>", styles['CustomNormal']),
+#         ])#type: ignore
+#         ukupno_tuzemne += rn.tuzemne_dnevnice#type: ignore
+#         ukupno_inozemne += rn.inozemne_dnevnice#type: ignore
+#         ukupno_sve += ukupno_po_nalogu
 
-    data.append([
-        Paragraph("<b>UKUPNO ZA TJEDAN</b>", styles['CustomNormal']), "", "", "",
-        Paragraph(f"<b>{ukupno_tuzemne:.2f}</b>", styles['CustomNormal']),
-        Paragraph(f"<b>{ukupno_inozemne:.2f}</b>", styles['CustomNormal']),
-        Paragraph(f"<b>{ukupno_sve:.2f} {vozac.valuta}</b>", styles['CustomNormal']),
-    ])#type: ignore
+#     data.append([
+#         Paragraph("<b>UKUPNO ZA TJEDAN</b>", styles['CustomNormal']), "", "", "",
+#         Paragraph(f"<b>{ukupno_tuzemne:.2f}</b>", styles['CustomNormal']),
+#         Paragraph(f"<b>{ukupno_inozemne:.2f}</b>", styles['CustomNormal']),
+#         Paragraph(f"<b>{ukupno_sve:.2f} {vozac.valuta}</b>", styles['CustomNormal']),
+#     ])#type: ignore
 
-    table = Table(data, colWidths=[165, 70, 70, 100, 80, 80, 95])
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#dddddd')),
-        ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#bbbbbb')),
-        ('GRID', (0,0), (-1,-1), 0.8, colors.black),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('ALIGN', (4,1), (-1,-1), 'RIGHT'),
-        ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('LEFTPADDING', (0,0), (-1,-1), 6),
-        ('RIGHTPADDING', (0,0), (-1,-1), 6),
-        ('TOPPADDING', (0,0), (-1,-1), 8),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 8),
-    ]))
-    elements.append(table)
+#     table = Table(data, colWidths=[165, 70, 70, 100, 80, 80, 95])
+#     table.setStyle(TableStyle([
+#         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#dddddd')),
+#         ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#bbbbbb')),
+#         ('GRID', (0,0), (-1,-1), 0.8, colors.black),
+#         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+#         ('ALIGN', (4,1), (-1,-1), 'RIGHT'),
+#         ('FONTSIZE', (0,0), (-1,-1), 10),
+#         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+#         ('LEFTPADDING', (0,0), (-1,-1), 6),
+#         ('RIGHTPADDING', (0,0), (-1,-1), 6),
+#         ('TOPPADDING', (0,0), (-1,-1), 8),
+#         ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+#     ]))
+#     elements.append(table)
 
-    doc.build(elements)
-    return response
+#     doc.build(elements)
+#     return response
 
 @login_required
 def export_naputci_pdf(request, vozilo_id):
@@ -916,3 +919,88 @@ def export_naputci_pdf(request, vozilo_id):
     
     doc.build(elements)
     return response
+
+@login_required
+def export_vozacev_tjedan_pdf(request, vozac_id):
+    vozac = get_object_or_404(Vozac, id=vozac_id)
+    vozilo = vozac.vozila.first()
+    tjedan = parse_int(request.GET.get('tjedan_rn'))
+    godina_tjedan = parse_int(request.GET.get('godina_tjedan_rn'))
+
+    if not tjedan or not godina_tjedan:
+        messages.error(request, "Odaberi tjedan za eksport!")
+        return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
+
+    try:
+        start = datetime(godina_tjedan, 1, 4)
+        start -= timedelta(days=start.weekday())
+        start_date = start + timedelta(weeks=tjedan - 1)
+        end_date = start_date + timedelta(days=6)
+    except:
+        messages.error(request, "Neispravan tjedan ili godina!")
+        return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
+
+    radni_nalozi = RadniNalog.objects.filter(
+        tura__vozac=vozac,
+        tura__datum_polaska__date__gte=start_date.date(),
+        tura__datum_polaska__date__lte=end_date.date()
+    ).select_related('tura').order_by('tura__datum_polaska')
+
+    if not radni_nalozi.exists():
+        messages.info(request, f"Nema radnih naloga za tjedan {tjedan}.")
+        return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
+
+    template_path = os.path.join(BASE_DIR, "excel_template", "template.xlsx")
+
+    for rn in radni_nalozi:
+    # 1. Otvori template
+        wb = load_workbook(template_path)
+        ws = wb["PutniNalog"]
+        
+        delta = rn.tura.datum_dolaska - rn.tura.datum_polaska
+
+        ukupni_dani = delta.days
+        ostatak_sati = delta.seconds // 3600
+        
+        # 2. Popuni fiksne lokacije
+        ws["G4"] = rn.tura.datum_polaska.strftime('%d.%m.%Y') if rn.tura.datum_polaska else ""
+        ws["G5"] = rn.tura.datum_dolaska.strftime('%d.%m.%Y') if rn.tura.datum_dolaska else ""
+        ws["T4"] = rn.tura.datum_polaska.strftime('%H:%M') if rn.tura.datum_polaska else ""
+        ws["T5"] = rn.tura.datum_dolaska.strftime('%H:%M') if rn.tura.datum_dolaska else ""
+        ws["O6"] = ukupni_dani
+        ws["U6"] = ostatak_sati
+        ws["A9"] = "BiH"
+        ws["A10"] = rn.konacna_drzava
+        ws["L9"] = 1
+        ws["L10"] = 1
+        ws["O8"] = f"IZNOS {rn.tura.vozac.valuta}"
+        ws["T8"] = f"UKUPNO {rn.tura.vozac.valuta}"
+        ws["O9"] = rn.tuzemne_dnevnice
+        ws["O10"] = rn.inozemne_dnevnice
+        ws["T9"] = rn.tuzemne_dnevnice
+        ws["T10"] = rn.inozemne_dnevnice
+        ws["T14"] = rn.papiri
+        ws["T15"] = rn.terminali
+        ws["T16"] = rn.cestarine
+        ws["AF4"] = rn.tura.broj_putnog_naloga
+        ws["AF5"] = datetime.now().strftime('%d.%m.%Y')
+        ws["AF16"] = rn.tura.vozac.ime
+        ws["AK17"] = "vozač"
+        ws["AN18"] = f"BiH - {rn.konacna_drzava}"
+        ws["AF19"] = "obavljanja prijevoza"
+        ws["AN21"] = rn.tura.datum_polaska.strftime('%d.%m.%Y') if rn.tura.datum_polaska else ""
+        ws["AT21"] = rn.tura.datum_dolaska.strftime('%d.%m.%Y') if rn.tura.datum_dolaska else ""
+        ws["AK25"] = vozilo.ime   
+        ws["AK26"] = rn.tura.relacija    
+        
+        output_dir = Path.home() / "Desktop" / "Izvještaji_radnih_naloga"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 3. Kreiraj output ime
+        filename = f"Izvještaj_{rn.tura.vozac}_tjedan_{tjedan}_{godina_tjedan}_{rn.id}.xlsx"
+        output_path = os.path.join(output_dir, filename)
+
+        # 4. Save new file
+        wb.save(output_path)
+        messages.success(request, f"Excel generiran i spremljen u: {output_path}")
+    return redirect('profil_vozaca', vozac_id=vozac.id)
