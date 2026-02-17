@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta
+from urllib import request
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum
 from django.contrib import messages
@@ -267,63 +268,40 @@ def unos_vozaca(request):
 def profil_vozaca(request, vozac_id):
     vozac = get_object_or_404(Vozac, id=vozac_id)
     
-    mjesec = parse_int(request.GET.get('mjesec'), datetime.now().month) if request.GET.get('mjesec') else None
-    godina = parse_int(request.GET.get('godina'), datetime.now().year)
+    datum_od_str = request.GET.get("datum_od")
+    datum_do_str = request.GET.get("datum_do")
+
+    datum_od = None
+    datum_do = None
+    mjesec = None
+    godina = None
+
+
+    if datum_od_str:
+        datum_od = datetime.strptime(datum_od_str, "%Y-%m-%d").date()
+        mjesec = datum_od.month
+        godina = datum_od.year
+
+    if datum_do_str:
+        datum_do = datetime.strptime(datum_do_str, "%Y-%m-%d").date()
+
     
-    # === NOVO: TJEDAN FILTER ===
-    iso = datetime.now().isocalendar()
-    
-    tjedan_rn_str = request.GET.get('tjedan_rn', '').strip()
-    godina_tjedan_rn_str = request.GET.get('godina_tjedan_rn', '').strip()
-
-    # Ako je parametar prazan ili 'None' → ne filtriramo po tjednu
-    tjedan_rn = None
-    godina_tjedan_rn = None
-
-    if tjedan_rn_str and tjedan_rn_str.lower() != 'none':
-        tjedan_rn = parse_int(tjedan_rn_str)
-
-    if godina_tjedan_rn_str and godina_tjedan_rn_str.lower() != 'none':
-        godina_tjedan_rn = parse_int(godina_tjedan_rn_str)
-
-    # Ako nema godine tjedna, a ima tjedan → fallback na tekuću ISO godinu
-    if tjedan_rn is not None and godina_tjedan_rn is None:
-        godina_tjedan_rn = iso.year
-    
-    if mjesec and godina:
+    if datum_od and datum_do:
         ture = Tura.objects.filter(
             vozac=vozac,
-            datum_polaska__month=mjesec,
-            datum_polaska__year=godina
+            datum_polaska__gte=datum_od,
+            datum_polaska__lte=datum_do
             ).order_by('datum_polaska')
-    elif godina:
-        ture = Tura.objects.filter(
-            vozac=vozac,
-            datum_polaska__year=godina
-            ).order_by('datum_polaska')
+        
+        radni_nalozi_vozaca = RadniNalog.objects.filter(
+            tura__vozac=vozac,
+            tura__datum_polaska__gte=datum_od,
+            tura__datum_polaska__lte=datum_do
+        ).select_related('tura').order_by('-tura__datum_polaska')
     else:
         ture = Tura.objects.filter(vozac=vozac).order_by('datum_polaska')
-        
-    radni_nalozi_vozaca = RadniNalog.objects.filter(
-        tura__vozac=vozac,
-        tura__datum_polaska__year=godina_tjedan_rn if godina_tjedan_rn else None
-    ).select_related('tura').order_by('-tura__datum_polaska')
-
-    # Primjenjujemo tjedan filter SAMO ako imamo oba parametra
-    if tjedan_rn is not None and godina_tjedan_rn is not None:
-        try:
-            start = datetime(godina_tjedan_rn, 1, 4)
-            start -= timedelta(days=start.weekday())          # ponedjeljak
-            start_date = start + timedelta(weeks=tjedan_rn - 1)
-            end_date = start_date + timedelta(days=6)
-
-            radni_nalozi_vozaca = radni_nalozi_vozaca.filter(
-                tura__datum_polaska__date__gte=start_date.date(),
-                tura__datum_polaska__date__lte=end_date.date()
-            )
-        except (ValueError, OverflowError):
-            # Neispravan datum → ne filtriramo (ili možeš dodati poruku)
-            pass 
+        radni_nalozi_vozaca = RadniNalog.objects.filter(tura__vozac=vozac).select_related('tura').order_by('-tura__datum_polaska')
+    
         
     if request.method == 'POST':
         form = VozacUpdateForm(request.POST, instance=vozac)
@@ -350,23 +328,6 @@ def profil_vozaca(request, vozac_id):
     # Prenos i bilanca
     bilanca = round(( total_razlika - total_dnevnice - total_cekanje + vozac.zaduzenje_prethodni_mjesec + vozac.uplaceno_na_banku),2)
     
-    svi_mjeseci = range(1, 13)
-    trenutna_godina = datetime.now().year
-    
-    # Generiraj listu tjedana (isto kao na homepage-u)
-    tjedni = []
-    prvi_dan = datetime(trenutna_godina, 1, 1)
-    prvi_pon = prvi_dan - timedelta(days=prvi_dan.weekday())
-    for t in range(1, 54):
-        pocetak = prvi_pon + timedelta(weeks=t-1)
-        kraj = pocetak + timedelta(days=6)
-        if pocetak.year >= trenutna_godina - 1 and pocetak.year <= trenutna_godina + 1:
-            if pocetak.year == trenutna_godina or kraj.year == trenutna_godina:
-                tjedni.append({
-                    'broj': t,
-                    'godina': pocetak.year,
-                    'label': f"Tjedan {t} – {pocetak.strftime('%d.%m.')} - {kraj.strftime('%d.%m.%Y')}"
-                })
 
     return render(request, 'profil_vozaca.html', {
         'vozac': vozac,
@@ -380,14 +341,9 @@ def profil_vozaca(request, vozac_id):
         'total_cekanje': total_cekanje,
         'bilanca': bilanca,
         'form': form,
-        'svi_mjeseci': svi_mjeseci,
-        'trenutna_godina': trenutna_godina,
         'odabrani_mjesec': int(mjesec) if mjesec else None,
         'odabrana_godina': int(godina) if godina else None,
         'radni_nalozi_vozaca': radni_nalozi_vozaca,
-        'tjedni': tjedni,
-        'tjedan_rn': tjedan_rn,
-        'godina_tjedan_rn': godina_tjedan_rn or trenutna_godina,
     })
 
 @login_required    
@@ -516,12 +472,26 @@ def obrisi_naputak(request, naputak_id):
 def export_vozac_pdf(request, vozac_id):
     vozac = get_object_or_404(Vozac, id=vozac_id)
 
-    mjesec = request.GET.get('mjesec')
-    godina = request.GET.get('godina')
+    datum_od_str = request.GET.get("datum_od")
+    datum_do_str = request.GET.get("datum_do")
 
-    if mjesec and godina:
-        ture = Tura.objects.filter(vozac=vozac, datum_polaska__month=mjesec, datum_polaska__year=godina).order_by('datum_polaska')
-        naziv_perioda = f"{int(mjesec)}. mjesec {godina}"
+    datum_od = None
+    datum_do = None
+    mjesec = None
+    godina = None
+
+
+    if datum_od_str:
+        datum_od = datetime.strptime(datum_od_str, "%Y-%m-%d").date()
+        mjesec = datum_od.month
+        godina = datum_od.year
+
+    if datum_do_str:
+        datum_do = datetime.strptime(datum_do_str, "%Y-%m-%d").date()
+
+    if datum_od and datum_do:
+        ture = Tura.objects.filter(vozac=vozac, datum_polaska__date__gte=datum_od, datum_polaska__date__lte=datum_do).order_by('datum_polaska')
+        naziv_perioda = f"{datum_od.strftime('%d.%m.%Y')} – {datum_do.strftime('%d.%m.%Y')}"
     elif godina:
         ture = Tura.objects.filter(vozac=vozac, datum_polaska__year=godina).order_by('datum_polaska')
         naziv_perioda = f"{godina}. godina"
@@ -713,127 +683,6 @@ def cijene_dnevnica(request):
         'cijene': cijene
     })
 
-# @login_required
-# def export_vozacev_tjedan_pdf(request, vozac_id):
-#     vozac = get_object_or_404(Vozac, id=vozac_id)
-#     tjedan = parse_int(request.GET.get('tjedan_rn'))
-#     godina_tjedan = parse_int(request.GET.get('godina_tjedan_rn'))
-
-#     if not tjedan or not godina_tjedan:
-#         messages.error(request, "Odaberi tjedan za eksport!")
-#         return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
-
-#     try:
-#         start = datetime(godina_tjedan, 1, 4)
-#         start -= timedelta(days=start.weekday())
-#         start_date = start + timedelta(weeks=tjedan - 1)
-#         end_date = start_date + timedelta(days=6)
-#     except:
-#         messages.error(request, "Neispravan tjedan ili godina!")
-#         return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
-
-#     radni_nalozi = RadniNalog.objects.filter(
-#         tura__vozac=vozac,
-#         tura__datum_polaska__date__gte=start_date.date(),
-#         tura__datum_polaska__date__lte=end_date.date()
-#     ).select_related('tura').order_by('tura__datum_polaska')
-
-#     if not radni_nalozi.exists():
-#         messages.info(request, f"Nema radnih naloga za tjedan {tjedan}.")
-#         return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
-
-#     response = HttpResponse(content_type='application/pdf')
-#     response['Content-Disposition'] = f'attachment; filename="RN_{vozac.ime}_Tjedan_{tjedan}_{godina_tjedan}.pdf"'
-
-#     font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Arial.ttf')
-#     pdfmetrics.registerFont(TTFont('Arial', font_path))
-
-#     doc = SimpleDocTemplate(response, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=20, bottomMargin=30)#type: ignore
-#     elements = []
-
-#     # === DVA LOGA – GORNJI LIJEVI KUT ===
-#     logo1_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo1.jpg')
-#     logo2_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo2.jpg')
-
-#     logos = []
-#     if os.path.exists(logo1_path):
-#         img1 = Image(logo1_path, width=75, height=48)
-#         img1.hAlign = 'LEFT'
-#         logos.append(img1)
-#     if os.path.exists(logo2_path):
-#         img2 = Image(logo2_path, width=75, height=48)
-#         img2.hAlign = 'LEFT'
-#         logos.append(img2)
-
-#     if logos:
-#         if len(logos) == 2:
-#             logo_table = Table([[logos[0], logos[1]]], colWidths=[85, 85])
-#         else:
-#             logo_table = Table([[logos[0]]], colWidths=[85])
-        
-#         logo_table.setStyle(TableStyle([
-#             ('ALIGN', (0,0), (-1,-1), 'LEFT'),
-#             ('VALIGN', (0,0), (-1,-1), 'TOP'),
-#             ('LEFTPADDING', (0,0), (-1,-1), 0),
-#             ('RIGHTPADDING', (0,0), (-1,-1), 40),
-#             ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-#         ]))
-#         elements.append(KeepInFrame(600, 100, [logo_table], hAlign='LEFT', vAlign='TOP'))
-#         elements.append(Spacer(1, 12))
-
-#     styles = getSampleStyleSheet()
-#     styles.add(ParagraphStyle(name='CustomTitle', fontName='Arial', fontSize=20, alignment=1, spaceAfter=10))
-#     styles.add(ParagraphStyle(name='CustomNormal', fontName='Arial', fontSize=10, leading=12))
-
-#     elements.append(Paragraph(f"RADNI NALOZI – {vozac.ime}", styles['CustomTitle']))
-#     elements.append(Paragraph(f"Tjedan {tjedan} / {godina_tjedan}  •  {start_date.strftime('%d.%m.')} – {end_date.strftime('%d.%m.%Y')}",
-#                               ParagraphStyle(name='Sub', fontName='Arial', fontSize=14, alignment=1, spaceAfter=25)))
-
-#     # Tablica
-#     data = [["Relacija", "Polazak", "Povratak", "Država", f"Tuzemne ({vozac.valuta})", f"Inozemne ({vozac.valuta})", f"Ukupno ({vozac.valuta})"]]
-#     ukupno_tuzemne = ukupno_inozemne = ukupno_sve = 0
-
-#     for rn in radni_nalozi:
-#         tura = rn.tura
-#         ukupno_po_nalogu = rn.tuzemne_dnevnice + rn.inozemne_dnevnice#type: ignore
-#         data.append([
-#             Paragraph(tura.relacija or "", styles['CustomNormal']),
-#             Paragraph(tura.datum_polaska.strftime('%d.%m.') if tura.datum_polaska else "", styles['CustomNormal']),
-#             Paragraph(tura.datum_dolaska.strftime('%d.%m.') if tura.datum_dolaska else "", styles['CustomNormal']),
-#             Paragraph(rn.konacna_drzava or "", styles['CustomNormal']),
-#             Paragraph(f"{rn.tuzemne_dnevnice:.2f}", styles['CustomNormal']),
-#             Paragraph(f"{rn.inozemne_dnevnice:.2f}", styles['CustomNormal']),
-#             Paragraph(f"<b>{ukupno_po_nalogu:.2f}</b>", styles['CustomNormal']),
-#         ])#type: ignore
-#         ukupno_tuzemne += rn.tuzemne_dnevnice#type: ignore
-#         ukupno_inozemne += rn.inozemne_dnevnice#type: ignore
-#         ukupno_sve += ukupno_po_nalogu
-
-#     data.append([
-#         Paragraph("<b>UKUPNO ZA TJEDAN</b>", styles['CustomNormal']), "", "", "",
-#         Paragraph(f"<b>{ukupno_tuzemne:.2f}</b>", styles['CustomNormal']),
-#         Paragraph(f"<b>{ukupno_inozemne:.2f}</b>", styles['CustomNormal']),
-#         Paragraph(f"<b>{ukupno_sve:.2f} {vozac.valuta}</b>", styles['CustomNormal']),
-#     ])#type: ignore
-
-#     table = Table(data, colWidths=[165, 70, 70, 100, 80, 80, 95])
-#     table.setStyle(TableStyle([
-#         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#dddddd')),
-#         ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#bbbbbb')),
-#         ('GRID', (0,0), (-1,-1), 0.8, colors.black),
-#         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-#         ('ALIGN', (4,1), (-1,-1), 'RIGHT'),
-#         ('FONTSIZE', (0,0), (-1,-1), 10),
-#         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-#         ('LEFTPADDING', (0,0), (-1,-1), 6),
-#         ('RIGHTPADDING', (0,0), (-1,-1), 6),
-#         ('TOPPADDING', (0,0), (-1,-1), 8),
-#         ('BOTTOMPADDING', (0,0), (-1,-1), 8),
-#     ]))
-#     elements.append(table)
-
-#     doc.build(elements)
-#     return response
 
 @login_required
 def export_naputci_pdf(request, vozilo_id):
@@ -924,30 +773,33 @@ def export_naputci_pdf(request, vozilo_id):
 def export_vozacev_tjedan_pdf(request, vozac_id):
     vozac = get_object_or_404(Vozac, id=vozac_id)
     vozilo = vozac.vozila.first()
-    tjedan = parse_int(request.GET.get('tjedan_rn'))
-    godina_tjedan = parse_int(request.GET.get('godina_tjedan_rn'))
 
-    if not tjedan or not godina_tjedan:
-        messages.error(request, "Odaberi tjedan za eksport!")
-        return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
+    datum_od_str = request.GET.get("datum_od")
+    datum_do_str = request.GET.get("datum_do")
+    firma = request.GET.get("logo", "ihlogistika")
+    
+    if firma == "ihtransport":
+        tekst_firme= "IH Transport d.o.o."
+    else:
+        tekst_firme = "IH Logistika d.o.o."
+        
+    datum_od = None
+    datum_do = None
 
-    try:
-        start = datetime(godina_tjedan, 1, 4)
-        start -= timedelta(days=start.weekday())
-        start_date = start + timedelta(weeks=tjedan - 1)
-        end_date = start_date + timedelta(days=6)
-    except:
-        messages.error(request, "Neispravan tjedan ili godina!")
-        return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
+    if datum_od_str:
+        datum_od = datetime.strptime(datum_od_str, "%Y-%m-%d").date()
+
+    if datum_do_str:
+        datum_do = datetime.strptime(datum_do_str, "%Y-%m-%d").date()
 
     radni_nalozi = RadniNalog.objects.filter(
         tura__vozac=vozac,
-        tura__datum_polaska__date__gte=start_date.date(),
-        tura__datum_polaska__date__lte=end_date.date()
+        tura__datum_polaska__date__gte=datum_od,
+        tura__datum_polaska__date__lte=datum_do
     ).select_related('tura').order_by('tura__datum_polaska')
 
     if not radni_nalozi.exists():
-        messages.info(request, f"Nema radnih naloga za tjedan {tjedan}.")
+        messages.info(request, f"Nema radnih naloga za period od {datum_od} do {datum_do}.")
         return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
 
     template_path = os.path.join(BASE_DIR, "excel_template", "template.xlsx")
@@ -982,6 +834,7 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         ws["T14"] = rn.papiri
         ws["T15"] = rn.terminali
         ws["T16"] = rn.cestarine
+        ws["AC1"] = tekst_firme
         ws["AF4"] = rn.tura.broj_putnog_naloga
         ws["AF5"] = datetime.now().strftime('%d.%m.%Y')
         ws["AF16"] = rn.tura.vozac.ime
@@ -991,16 +844,46 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         ws["AN21"] = rn.tura.datum_polaska.strftime('%d.%m.%Y') if rn.tura.datum_polaska else ""
         ws["AT21"] = rn.tura.datum_dolaska.strftime('%d.%m.%Y') if rn.tura.datum_dolaska else ""
         ws["AK25"] = vozilo.ime   
-        ws["AK26"] = rn.tura.relacija    
+        ws["AK26"] = rn.tura.relacija
         
-        output_dir = Path.home() / "Desktop" / "Izvještaji_radnih_naloga"
-        output_dir.mkdir(parents=True, exist_ok=True)
+        ostali_troskovi = rn.ostali_troskovi
+        if ostali_troskovi:
+            rezultat = []
+
+            for item in ostali_troskovi.split(","):
+                naziv, broj = item.split(":")
+                rezultat.append((naziv.strip(), int(broj)))    
+            
+            row = 26
+            for naziv, broj in rezultat:
+                ws[f"A{row}"] = naziv
+                ws[f"T{row}"] = broj
+                row += 1
+                
+        izdaci = rn.izdaci
+        row = 44
+
+        if izdaci:  # zaštita ako je None ili prazan string
+            stavke = [x.strip() for x in izdaci.split(",")]
+
+            for stavka in stavke:
+                ws[f"AD{row}"] = stavka
+                row += 1
         
-        # 3. Kreiraj output ime
-        filename = f"Izvještaj_{rn.tura.vozac}_tjedan_{tjedan}_{godina_tjedan}_{rn.id}.xlsx"
-        output_path = os.path.join(output_dir, filename)
+        # Base folder
+        base_dir = Path.home() / "Desktop" / "Izvještaji_radnih_naloga"
+        base_dir.mkdir(parents=True, exist_ok=True)
+
+        # Folder po vozacu
+        vozac_folder_name = vozac.ime.replace("/", "-").replace("\\", "-")
+        vozac_dir = base_dir / vozac_folder_name
+        vozac_dir.mkdir(exist_ok=True)
+
+        # File path
+        filename = f"Izvještaj_{vozac_folder_name}_od_{datum_od}_do_{datum_do}_{rn.id}.xlsx"
+        output_path = os.path.join(vozac_dir, filename)
 
         # 4. Save new file
         wb.save(output_path)
-        messages.success(request, f"Excel generiran i spremljen u: {output_path}")
+        messages.success(request, f"Excel generiran i spremljen u: Desktop / Izvještaji_radnih_naloga / {vozac_folder_name} / {filename}")
     return redirect('profil_vozaca', vozac_id=vozac.id)

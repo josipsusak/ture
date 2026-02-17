@@ -44,78 +44,81 @@
     <!-- Filtriranje tura -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-dark text-white">
-            <h5 class="mb-0">Filtriranje tura</h5>
+            <h5 class="mb-0">Filter podataka</h5>
         </div>
+
         <div class="card-body">
-            <form method="get" class="row g-12">
+            <form method="get" class="row g-3 align-items-end">
+
+                <!-- LOGO -->
                 <div class="col-md-3">
-                    <label class="form-label fw-bold">Logo za firmu:</label>
-                    <div class="d-flex gap-4 mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="logo" id="logo_ihlogistika" value="ihlogistika" 
-                                {% if request.GET.logo != 'ihtransport' %}checked{% endif %}>
-                            <label class="form-check-label" for="logo_ihlogistika">
-                                IHLogistika
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="logo" id="logo_ihtransport" value="ihtransport"
-                                {% if request.GET.logo == 'ihtransport' %}checked{% endif %}>
-                            <label class="form-check-label" for="logo_ihtransport">
-                                IH Transport
-                            </label>
-                        </div>
+                    <label class="form-label fw-bold">Firma</label>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio"
+                            name="logo"
+                            value="ihlogistika"
+                            {% if request.GET.logo != 'ihtransport' %}checked{% endif %}>
+                        <label class="form-check-label">IHLogistika</label>
                     </div>
-                 </div>
-                 <div class="col-md-1"> 
-                    <label for="mjesec" class="form-label">Mjesec</label>
-                    <select name="mjesec" id="mjesec" class="form-select">
-                        <option value="">-- Sve ture --</option>
-                        {% for m in svi_mjeseci %}
-                            <option value="{{ m }}" {% if odabrani_mjesec == m %}selected{% endif %}>
-                                {{ m }}
-                            </option>
-                        {% endfor %}
-                    </select>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio"
+                            name="logo"
+                            value="ihtransport"
+                            {% if request.GET.logo == 'ihtransport' %}checked{% endif %}>
+                        <label class="form-check-label">IH Transport</label>
+                    </div>
+                </div>
+
+                <!-- DATE RANGE TURE -->
+                <div class="col-md-2">
+                    <label class="form-label">Ture od</label>
+                    <input type="date"
+                        name="datum_od"
+                        value="{{ request.GET.datum_od }}"
+                        class="form-control">
                 </div>
 
                 <div class="col-md-2">
-                    <label for="godina" class="form-label">Godina</label>
-                    <input type="number" name="godina" id="godina"
-                           value="{{ odabrana_godina|default:trenutna_godina }}"
-                           class="form-control">
+                    <label class="form-label">Ture do</label>
+                    <input type="date"
+                        name="datum_do"
+                        value="{{ request.GET.dater.GET.datum_do }}"
+                        class="form-control">
                 </div>
 
-                <div class="col-md-3 d-flex align-items-end mb-1">
-                    <button type="submit" class="btn btn-primary me-2">🔍 Prikaži</button>
-                    <a href="?mjesec=&godina={{ trenutna_godina }}" class="btn btn-outline-secondary">Poništi</a>
+
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        🔍 Filtriraj
+                    </button>
+
+                    <a href="{% url 'profil_vozaca' vozac.id %}"
+                    class="btn btn-outline-secondary">
+                        Poništi
+                    </a>
                 </div>
+
             </form>
         </div>
     </div>
 
-    <!-- Ture vozača -->
+
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
             
-            <span class="badge bg-light text-dark fs-6">
-                {% if odabrani_mjesec and odabrana_godina %}
-                    ({{ odabrani_mjesec }} / {{ odabrana_godina }})
-                {% endif %}
-            </span>
+            <span class="badge bg-light text-dark fs-6">Ture vozača</span>
 
             <div class="d-flex align-items-center">
 
-            {% if odabrani_mjesec and odabrana_godina %}
-                <a href="#" onclick="exportWithLogo('{% url 'export_vozac_pdf' vozac.id %}?mjesec={{ odabrani_mjesec }}&godina={{ odabrana_godina }}')"
-                class="btn btn-warning btn-sm ms-3">
-                    Eksportiraj mjesec u PDF
-                </a>
+            {% if request.GET.datum_od and request.GET.datum_do %}
+                <a href="{% url 'export_vozac_pdf' vozac.id %}?datum_od={{ request.GET.datum_od }}&datum_do={{ request.GET.datum_do }}&logo={{ request.GET.logo|default:'ihlogistika' }}" class="btn btn-warning btn-sm">Eksport ture PDF</a>
             {% else %}
                 <button class="btn btn-warning btn-sm ms-3" disabled>
-                    Eksportiraj mjesec u PDF
+                    Eksportiraj ture u PDF
                 </button>
-                <small class="text-light ms-2 opacity-75">Odaberi mjesec i godinu</small>
+                <small class="text-light ms-2 opacity-75">Odaberi datum</small>
             {% endif %}
 
             </div>
@@ -179,76 +182,44 @@
         </div>
     </div>
 
-    <!-- Filtriranje radnih naloga po tjednu -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-info text-white">
-            <h5 class="mb-0">Filtriranje radnih naloga po tjednu</h5>
-        </div>
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-6">
-                    <label class="form-label">Tjedan</label>
-                    <select name="tjedan_rn" class="form-select" onchange="this.form.submit()">
-                        <option value="">-- Svi tjedni --</option>
-                        {% for t in tjedni %}
-                            <option value="{{ t.broj }}" 
-                                    data-godina="{{ t.godina }}"
-                                    {% if t.broj == tjedan_rn and t.godina == godina_tjedan_rn %}selected{% endif %}>
-                                {{ t.label }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Godina</label>
-                    <input type="number" name="godina_tjedan_rn" class="form-control" 
-                        value="{{ godina_tjedan_rn|default:trenutna_godina }}" min="2020" max="2030">
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary me-2">Filtriraj</button>
-                    <a href="{% url 'profil_vozaca' vozac.id %}" class="btn btn-outline-secondary">Poništi</a>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <div class="card shadow-sm mb-4">
     <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Radni nalozi vozača</h5>
         <div>
-            <span class="badge bg-light text-dark fs-6 me-3">
-                {{ radni_nalozi_vozaca.count }} naloga
-                {% if tjedan_rn %} (Tjedan {{ tjedan_rn }}) {% endif %}
-            </span>
-                {% if tjedan_rn and godina_tjedan_rn %}
-                    <a href="{% url 'export_vozacev_tjedan_pdf' vozac.id %}?tjedan_rn={{ tjedan_rn }}&godina_tjedan_rn={{ godina_tjedan_rn }}"
-                    class="btn btn-warning btn-sm">
-                    Eksportiraj tjedan u PDF
-                    </a>
+                {% if request.GET.datum_od and request.GET.datum_do %}
+                <a href="{% url 'export_vozacev_tjedan_pdf' vozac.id %}?{{ request.GET.urlencode }}"
+                class="btn btn-warning btn-sm">
+                Eksport RN tjedan PDF
+                </a>
                 {% else %}
-                    <button class="btn btn-warning btn-sm" disabled>
-                    Eksportiraj tjedan u PDF
+                    <button class="btn btn-secondary btn-sm" disabled>
+                    Eksportiraj radne naloge u Excel
                     </button>
-                    <small class="text-muted ms-2">Odaberi tjedan za eksport</small>
-                {% endif %}
+                    <small class="text-muted ms-2">Odaberi datum</small>
+                {% endif %} 
         </div>
     </div>
 
         <div class="card-body table-responsive">
             {% if radni_nalozi_vozaca %}
                 <table class="table table-striped table-bordered align-middle table-sm">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Relacija</th>
-                            <th>Datum polaska</th>
-                            <th>Datum dolaska</th>
-                            <th>Tuzemne</th>
-                            <th>Inozemne</th>
-                            <th>Ukupno</th>
-                            <th>Država</th>
-                            <th>Akcije</th>
-                        </tr>
-                    </thead>
+                <thead class="table-dark">
+                    <tr>
+                        <th>Relacija</th>
+                        <th>Datum polaska</th>
+                        <th>Datum dolaska</th>
+                        <th>Tuzemne</th>
+                        <th>Inozemne</th>
+                        <th>Ukupno</th>
+                        <th>Krajnja država</th>
+                        <th>Papiri</th>
+                        <th>Terminali</th>
+                        <th>Cestarine</th>
+                        <th>Ostali troškovi</th>
+                        <th>Izdaci</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
                     <tbody>
                         {% for rn in radni_nalozi_vozaca %}
                         <tr {% if not rn.aktivan %}class="table-secondary"{% endif %}>
@@ -258,12 +229,26 @@
                             <td class="text-success fw-bold">{{ rn.tuzemne_dnevnice|floatformat:2 }} {{ rn.tura.vozac.valuta }}</td>
                             <td class="text-info fw-bold">{{ rn.inozemne_dnevnice|floatformat:2 }} {{ rn.tura.vozac.valuta }}</td>
                             <td class="fw-bold">{{ rn.tuzemne_dnevnice|add:rn.inozemne_dnevnice|floatformat:2 }} {{ rn.tura.vozac.valuta }}</td>
-                            <td>
-                                <span class="badge bg-warning text-dark">{{ rn.konacna_drzava }}</span>
+                            <td><span class="badge bg-warning text-dark">{{ rn.konacna_drzava }}</span></td>
+                            <td class="text-danger fw-bold">
+                                {{ rn.papiri|default_if_none:0|floatformat:2 }} {{ rn.tura.vozac.valuta }}
+                            </td>
+
+                            <td class="text-danger fw-bold">
+                                {{ rn.terminali|default_if_none:0|floatformat:2 }} {{ rn.tura.vozac.valuta }}
+                            </td>
+
+                            <td class="text-danger fw-bold">
+                                {{ rn.cestarine|default_if_none:0|floatformat:2 }} {{ rn.tura.vozac.valuta }}
                             </td>
                             <td>
-                                <a href="{% url 'radni_nalog_detail' rn.id %}" class="btn btn-sm btn-primary">Prikaži</a>
+                                {{ rn.ostali_troskovi|default:"-" }}
                             </td>
+                            <td>
+                                {{ rn.izdaci|default:"-" }}
+                            </td>
+                            <td><a href="{% url 'radni_nalog_detail' rn.id %}" class="btn btn-sm btn-primary">Prikaži</a></td>
+
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -279,19 +264,9 @@
 </div>
 
 <script>
-function exportWithLogo(baseUrl) {
-    const selectedLogo = document.querySelector('input[name="logo"]:checked');
-    let logoParam = '';
-    if (selectedLogo && selectedLogo.value) {
-        logoParam = '&logo=' + selectedLogo.value;
-    }
-    
-    // Dodaj logo parametar na URL
-    const finalUrl = baseUrl + logoParam;
-    
-    // Otvori u novom tabu ili preusmjeri
-    window.open(finalUrl, '_blank');
+function exportCurrent(baseUrl){
+    const params = new URLSearchParams(window.location.search);
+    window.open(baseUrl + "?" + params.toString(), "_blank");
 }
 </script>
-
 {% endblock %}
