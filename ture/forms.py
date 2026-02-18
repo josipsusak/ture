@@ -29,6 +29,7 @@ class TuraForm(forms.ModelForm):
             'broj_putnog_naloga',
             'iznos_ture',
             'cekanje',
+            'aktivan',
         ]
         widgets = {
             'datum_polaska': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
@@ -50,6 +51,7 @@ class TuraForm(forms.ModelForm):
             'broj_putnog_naloga': 'Broj putnog naloga',
             'iznos_ture': 'Iznos ture',
             'cekanje': 'Čekanje',
+            'aktivan': 'Aktivan',
         }
         
 class VozacUpdateForm(forms.ModelForm):
@@ -102,7 +104,7 @@ class NaputakForm(forms.ModelForm):
 class RadniNalogForm(forms.ModelForm):
     class Meta:
         model = RadniNalog
-        fields = ['tura', 'konacna_drzava', 'papiri', 'terminali', 'cestarine', 'ostali_troskovi', 'izdaci']
+        fields = ['tura', 'konacna_drzava', 'papiri', 'terminali', 'cestarine', 'ostali_troskovi', 'izdaci', 'aktivan']
         labels = {
             'tura': 'Tura',
             'konacna_drzava': 'Konačna država',
@@ -111,6 +113,7 @@ class RadniNalogForm(forms.ModelForm):
             'cestarine': 'Cestarine',
             'ostali_troskovi': 'Ostali troškovi',
             'izdaci': 'Izdaci',
+            'aktivan': 'Aktivan',
         }
     
     def __init__(self, *args, **kwargs):

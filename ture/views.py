@@ -781,7 +781,7 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
     if firma == "ihtransport":
         tekst_firme= "IH Transport d.o.o."
     else:
-        tekst_firme = "IH Logistika d.o.o."
+        tekst_firme = "Hrkać Logistika d.o.o."
         
     datum_od = None
     datum_do = None

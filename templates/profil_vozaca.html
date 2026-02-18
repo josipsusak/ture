@@ -16,11 +16,6 @@
         {% endfor %}
     {% endif %}
 
-    <div class="mb-3">
-        <a href="{% url 'homepage' %}" class="btn btn-outline-primary btn-sm me-2">🏠 Početna</a>
-        <a href="{% url 'popis_vozaca' %}" class="btn btn-outline-secondary btn-sm">← Povratak na popis vozača</a>
-    </div>
-
     <h2 class="mb-4 text-center">Profil vozača: {{ vozac.ime }}</h2>
 
     <!-- Financije -->
@@ -59,7 +54,7 @@
                             name="logo"
                             value="ihlogistika"
                             {% if request.GET.logo != 'ihtransport' %}checked{% endif %}>
-                        <label class="form-check-label">IHLogistika</label>
+                        <label class="form-check-label">Hrkać Logistika</label>
                     </div>
 
                     <div class="form-check">
@@ -189,7 +184,7 @@
                 {% if request.GET.datum_od and request.GET.datum_do %}
                 <a href="{% url 'export_vozacev_tjedan_pdf' vozac.id %}?{{ request.GET.urlencode }}"
                 class="btn btn-warning btn-sm">
-                Eksport RN tjedan PDF
+                Eksport RN u Excel
                 </a>
                 {% else %}
                     <button class="btn btn-secondary btn-sm" disabled>
