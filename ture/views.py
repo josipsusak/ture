@@ -545,7 +545,7 @@ def export_vozac_pdf(request, vozac_id):
     elements.append(Paragraph(naziv_perioda, ParagraphStyle(name='Sub', fontName='Arial', fontSize=14, alignment=1, spaceAfter=25)))
 
     # Tablica
-    data = [["Relacija", "Polazak", "Povratak", "Km", "Zaduženje", "Na banku", "Razduženje", "Razlika", "Iznos", "Dnevnice", "Čekanje"]]
+    data = [["Relacija", "Polazak", "Povratak", "Km", "Zaduženje", "Razduženje", "Razlika", "Iznos", "Dnevnice", "Čekanje", "Na banku"]]
     ukupno_km = ukupno_zaduz = ukupno_razduz = ukupno_razlika = ukupno_iznos = ukupno_dnevnice = ukupno_cekanje = 0
 
     for t in ture:
@@ -555,12 +555,12 @@ def export_vozac_pdf(request, vozac_id):
             Paragraph(t.datum_dolaska.strftime('%d.%m.%Y') if t.datum_dolaska else "", styles['CustomNormal']),
             Paragraph(str(t.kilometraza) if t.kilometraza else "", styles['CustomNormal']),
             Paragraph(f"{t.zaduzenje:.2f}" if t.zaduzenje is not None else "", styles['CustomNormal']),
-            Paragraph("", styles['CustomNormal']),
             Paragraph(f"{t.razduzenje:.2f}" if t.razduzenje is not None else "", styles['CustomNormal']),
             Paragraph(f"{t.razlika:.2f}" if t.razlika is not None else "", styles['CustomNormal']),
             Paragraph(f"{t.iznos_ture:.2f}" if t.iznos_ture is not None else "", styles['CustomNormal']),
             Paragraph(f"{t.dnevnice:.2f}" if t.dnevnice is not None else "", styles['CustomNormal']),
             Paragraph(f"{t.cekanje:.2f}" if t.cekanje is not None else "", styles['CustomNormal']),
+            Paragraph("", styles['CustomNormal']),
         ])#type: ignore
         ukupno_km += t.kilometraza or 0
         ukupno_zaduz += t.zaduzenje or 0
@@ -574,12 +574,12 @@ def export_vozac_pdf(request, vozac_id):
     data.append(["", "", "",
                  Paragraph(f"<b>{ukupno_km}</b>", styles['CustomNormal']),
                  Paragraph(f"<b>{ukupno_zaduz:.2f}</b>", styles['CustomNormal']),
-                 Paragraph(f"<b>{ukupno_na_banku:.2f}</b>", styles['CustomNormal']),
                  Paragraph(f"<b>{ukupno_razduz:.2f}</b>", styles['CustomNormal']),
                  Paragraph(f"<b>{ukupno_razlika:.2f}</b>", styles['CustomNormal']),
                  Paragraph(f"<b>{ukupno_iznos:.2f}</b>", styles['CustomNormal']),
                  Paragraph(f"<b>{ukupno_dnevnice:.2f}</b>", styles['CustomNormal']),
-                 Paragraph(f"<b>{ukupno_cekanje:.2f}</b>", styles['CustomNormal'])])#type: ignore
+                 Paragraph(f"<b>{ukupno_cekanje:.2f}</b>", styles['CustomNormal']),
+                 Paragraph(f"<b>{ukupno_na_banku:.2f}</b>", styles['CustomNormal'])])#type: ignore
 
     table = Table(data,colWidths=[140, 70, 70, 60, 70, 70, 70, 70, 70, 60, 60])
     
