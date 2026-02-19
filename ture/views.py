@@ -851,28 +851,36 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         ws["AK26"] = rn.tura.relacija if rn.tura.relacija else ""
         
         ostali_troskovi = rn.ostali_troskovi
+
         if ostali_troskovi:
             rezultat = []
 
             for item in ostali_troskovi.split(","):
-                naziv, broj = item.split(":")
-                rezultat.append((naziv.strip(), int(broj)))    
-            
+                item = item.strip()
+
+                if ":" in item:
+                    naziv, broj = item.split(":", 1)  # samo prvo splitanje
+
+                    try:
+                        rezultat.append((naziv.strip(), int(broj.strip())))
+                    except ValueError:
+                        continue 
+
             row = 26
             for naziv, broj in rezultat:
                 ws[f"A{row}"] = naziv
                 ws[f"T{row}"] = broj
                 row += 1
                 
-        izdaci = rn.izdaci
-        row = 44
+            izdaci = rn.izdaci
+            row = 44
 
-        if izdaci:  # zaštita ako je None ili prazan string
-            stavke = [x.strip() for x in izdaci.split(",")]
+            if izdaci:
+                stavke = [x.strip() for x in izdaci.split(",") if x.strip()]
 
-            for stavka in stavke:
-                ws[f"AD{row}"] = stavka
-                row += 1
+                for stavka in stavke:
+                    ws[f"AD{row}"] = stavka
+                    row += 1
         
         # Base folder
         base_dir = Path.home() / "Desktop" / "Izvještaji_radnih_naloga"
