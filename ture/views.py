@@ -818,6 +818,36 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         ukupni_dani = delta.days
         ostatak_sati = delta.seconds // 3600
         
+
+        # --- 4. Ukupno vrijeme ture ---
+        ukupni_sati = (rn.tura.datum_dolaska - rn.tura.datum_polaska).total_seconds() / 3600.0
+        ukupno_dnevnice = u_dnevnica(ukupni_sati)
+
+
+        # --- 7. Inozemne dnevnice (između granica) ---
+        inozem_sati = (rn.tura.granica_povratak - rn.tura.granica_polazak).total_seconds() / 3600.0
+        inozemne_dnev = u_dnevnica(inozem_sati)
+
+        # --- 8. Tuzemne (prije + poslije granice) ---
+        tuzem_sati = 0.0
+        if rn.tura.datum_polaska < rn.tura.granica_polazak:
+            tuzem_sati += (rn.tura.granica_polazak - rn.tura.datum_polaska).total_seconds() / 3600.0
+        if rn.tura.datum_dolaska > rn.tura.granica_povratak:
+            tuzem_sati += (rn.tura.datum_dolaska - rn.tura.granica_povratak).total_seconds() / 3600.0
+        tuzemne_dnev = u_dnevnica(tuzem_sati)
+        
+        if tuzemne_dnev < 1 and tuzem_sati > 0:
+            tuzemne_dnev = 1
+
+        # --- 9. CAP: zbroj ne smije biti veći od ukupno_dnevnice ---
+        suma = inozemne_dnev + tuzemne_dnev
+        if suma > ukupno_dnevnice:
+            inozemne_dnev = max(0.0, ukupno_dnevnice - tuzemne_dnev)
+            
+        cijene_dnevnica = CijenaDnevnica.objects.all()    
+        cijena_tuzemne = cijene_dnevnica.filter(drzava='BiH').first().iznos if cijene_dnevnica.filter(drzava='BiH').exists() else 0
+        cijena_inozemne = cijene_dnevnica.filter(drzava=rn.konacna_drzava).first().iznos if cijene_dnevnica.filter(drzava=rn.konacna_drzava).exists() else 0
+        
         # 2. Popuni fiksne lokacije
         ws["G4"] = rn.tura.datum_polaska.strftime('%d.%m.%Y') if rn.tura.datum_polaska else ""
         ws["G5"] = rn.tura.datum_dolaska.strftime('%d.%m.%Y') if rn.tura.datum_dolaska else ""
@@ -827,12 +857,12 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         ws["U6"] = ostatak_sati
         ws["A9"] = "BiH"
         ws["A10"] = rn.konacna_drzava if rn.konacna_drzava else ""
-        ws["L9"] = 1
-        ws["L10"] = 1
+        ws["L9"] = tuzemne_dnev if tuzemne_dnev else 1
+        ws["L10"] = inozemne_dnev if inozemne_dnev else 0
         ws["O8"] = f"IZNOS {rn.tura.vozac.valuta}"
         ws["T8"] = f"UKUPNO {rn.tura.vozac.valuta}"
-        ws["O9"] = rn.tuzemne_dnevnice if rn.tuzemne_dnevnice else 0
-        ws["O10"] = rn.inozemne_dnevnice if rn.inozemne_dnevnice else 0
+        ws["O9"] = cijena_tuzemne if cijena_tuzemne else 0
+        ws["O10"] = cijena_inozemne if cijena_inozemne else 0
         ws["T9"] = rn.tuzemne_dnevnice if rn.tuzemne_dnevnice else 0
         ws["T10"] = rn.inozemne_dnevnice if rn.inozemne_dnevnice else 0
         ws["T14"] = rn.papiri if rn.papiri else 0
@@ -847,7 +877,11 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         ws["AF19"] = "obavljanja prijevoza"
         ws["AN21"] = rn.tura.datum_polaska.strftime('%d.%m.%Y') if rn.tura.datum_polaska else ""
         ws["AT21"] = rn.tura.datum_dolaska.strftime('%d.%m.%Y') if rn.tura.datum_dolaska else ""
-        ws["AK25"] = vozilo.ime if vozilo.ime else ""   
+        try:
+            ws["AK25"] = vozilo.ime if vozilo.ime else ""  
+        except AttributeError:
+                messages.error(request, f"Dodajte vozilo vozaču {vozac.ime} kako bi se prikazalo u izvještaju.")
+            
         ws["AK26"] = rn.tura.relacija if rn.tura.relacija else ""
         
         ostali_troskovi = rn.ostali_troskovi
@@ -899,3 +933,16 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         wb.save(output_path)
         messages.success(request, f"Excel generiran i spremljen u: Desktop / Izvještaji_radnih_naloga / {vozac_folder_name} / {filename}")
     return redirect('profil_vozaca', vozac_id=vozac.id)
+
+
+def u_dnevnica(sati):
+    if sati <= 0:
+        return 0.0
+    if sati <= 8:
+        return 0.5
+    if sati <= 24:
+        return 1.0
+    puni = int(sati // 24)
+    ostatak = sati % 24
+    dodatno = 0.5 if ostatak <= 8 else 1.0
+    return puni + dodatno
