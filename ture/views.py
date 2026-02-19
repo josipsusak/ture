@@ -545,7 +545,7 @@ def export_vozac_pdf(request, vozac_id):
     elements.append(Paragraph(naziv_perioda, ParagraphStyle(name='Sub', fontName='Arial', fontSize=14, alignment=1, spaceAfter=25)))
 
     # Tablica
-    data = [["Relacija", "Polazak", "Povratak", "Km", "Zaduženje", "Razduženje", "Razlika", "Iznos", "Dnevnice", "Čekanje"]]
+    data = [["Relacija", "Polazak", "Povratak", "Km", "Zaduženje", "Na banku", "Razduženje", "Razlika", "Iznos", "Dnevnice", "Čekanje"]]
     ukupno_km = ukupno_zaduz = ukupno_razduz = ukupno_razlika = ukupno_iznos = ukupno_dnevnice = ukupno_cekanje = 0
 
     for t in ture:
@@ -555,6 +555,7 @@ def export_vozac_pdf(request, vozac_id):
             Paragraph(t.datum_dolaska.strftime('%d.%m.%Y') if t.datum_dolaska else "", styles['CustomNormal']),
             Paragraph(str(t.kilometraza) if t.kilometraza else "", styles['CustomNormal']),
             Paragraph(f"{t.zaduzenje:.2f}" if t.zaduzenje is not None else "", styles['CustomNormal']),
+            Paragraph("", styles['CustomNormal']),
             Paragraph(f"{t.razduzenje:.2f}" if t.razduzenje is not None else "", styles['CustomNormal']),
             Paragraph(f"{t.razlika:.2f}" if t.razlika is not None else "", styles['CustomNormal']),
             Paragraph(f"{t.iznos_ture:.2f}" if t.iznos_ture is not None else "", styles['CustomNormal']),
@@ -568,17 +569,20 @@ def export_vozac_pdf(request, vozac_id):
         ukupno_iznos += t.iznos_ture or 0
         ukupno_dnevnice += t.dnevnice or 0
         ukupno_cekanje += t.cekanje or 0
+        ukupno_na_banku = vozac.uplaceno_na_banku or 0
 
     data.append(["", "", "",
                  Paragraph(f"<b>{ukupno_km}</b>", styles['CustomNormal']),
                  Paragraph(f"<b>{ukupno_zaduz:.2f}</b>", styles['CustomNormal']),
+                 Paragraph(f"<b>{ukupno_na_banku:.2f}</b>", styles['CustomNormal']),
                  Paragraph(f"<b>{ukupno_razduz:.2f}</b>", styles['CustomNormal']),
                  Paragraph(f"<b>{ukupno_razlika:.2f}</b>", styles['CustomNormal']),
                  Paragraph(f"<b>{ukupno_iznos:.2f}</b>", styles['CustomNormal']),
                  Paragraph(f"<b>{ukupno_dnevnice:.2f}</b>", styles['CustomNormal']),
                  Paragraph(f"<b>{ukupno_cekanje:.2f}</b>", styles['CustomNormal'])])#type: ignore
 
-    table = Table(data, colWidths=[140, 70, 70, 60, 70, 70, 70, 70, 70, 60])
+    table = Table(data,colWidths=[140, 70, 70, 60, 70, 70, 70, 70, 70, 60, 60])
+    
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#dddddd')),
         ('GRID', (0,0), (-1,-1), 0.8, colors.black),
@@ -822,29 +826,29 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         ws["O6"] = ukupni_dani
         ws["U6"] = ostatak_sati
         ws["A9"] = "BiH"
-        ws["A10"] = rn.konacna_drzava
+        ws["A10"] = rn.konacna_drzava if rn.konacna_drzava else ""
         ws["L9"] = 1
         ws["L10"] = 1
         ws["O8"] = f"IZNOS {rn.tura.vozac.valuta}"
         ws["T8"] = f"UKUPNO {rn.tura.vozac.valuta}"
-        ws["O9"] = rn.tuzemne_dnevnice
-        ws["O10"] = rn.inozemne_dnevnice
-        ws["T9"] = rn.tuzemne_dnevnice
-        ws["T10"] = rn.inozemne_dnevnice
-        ws["T14"] = rn.papiri
-        ws["T15"] = rn.terminali
-        ws["T16"] = rn.cestarine
+        ws["O9"] = rn.tuzemne_dnevnice if rn.tuzemne_dnevnice else 0
+        ws["O10"] = rn.inozemne_dnevnice if rn.inozemne_dnevnice else 0
+        ws["T9"] = rn.tuzemne_dnevnice if rn.tuzemne_dnevnice else 0
+        ws["T10"] = rn.inozemne_dnevnice if rn.inozemne_dnevnice else 0
+        ws["T14"] = rn.papiri if rn.papiri else 0
+        ws["T15"] = rn.terminali if rn.terminali else 0
+        ws["T16"] = rn.cestarine if rn.cestarine else 0
         ws["AC1"] = tekst_firme
-        ws["AF4"] = rn.tura.broj_putnog_naloga
+        ws["AF4"] = rn.tura.broj_putnog_naloga if rn.tura.broj_putnog_naloga else ""
         ws["AF5"] = datetime.now().strftime('%d.%m.%Y')
-        ws["AF16"] = rn.tura.vozac.ime
+        ws["AF16"] = rn.tura.vozac.ime if rn.tura.vozac.ime else ""
         ws["AK17"] = "vozač"
         ws["AN18"] = f"BiH - {rn.konacna_drzava}"
         ws["AF19"] = "obavljanja prijevoza"
         ws["AN21"] = rn.tura.datum_polaska.strftime('%d.%m.%Y') if rn.tura.datum_polaska else ""
         ws["AT21"] = rn.tura.datum_dolaska.strftime('%d.%m.%Y') if rn.tura.datum_dolaska else ""
-        ws["AK25"] = vozilo.ime   
-        ws["AK26"] = rn.tura.relacija
+        ws["AK25"] = vozilo.ime if vozilo.ime else ""   
+        ws["AK26"] = rn.tura.relacija if rn.tura.relacija else ""
         
         ostali_troskovi = rn.ostali_troskovi
         if ostali_troskovi:
