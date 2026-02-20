@@ -163,7 +163,8 @@ class RadniNalog(models.Model):
             'Francuska': 90, 'Hrvatska': 50, 'Mađarska': 70,
             'Švicarska': 90, 'Italija': 80,
         }
-        cijene = {**default_cijene, **cijene_dict}  # baza ima prednost
+        #cijene = {**default_cijene, **cijene_dict}  # baza ima prednost
+        cijene = {**cijene_dict}
 
         # --- 2. Validacija vremena ---
         if not t or not t.datum_polaska or not t.datum_dolaska:
@@ -181,7 +182,12 @@ class RadniNalog(models.Model):
                 return 1.0
             puni = int(sati // 24)
             ostatak = sati % 24
-            dodatno = 0.5 if ostatak <= 8 else 1.0
+            if ostatak == 0:
+                dodatno = 0
+            elif ostatak <= 8:
+                dodatno = 0.5
+            else:
+                dodatno = 1.0
             return puni + dodatno
 
         # --- 4. Ukupno vrijeme ture ---
