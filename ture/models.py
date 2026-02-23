@@ -236,6 +236,7 @@ class RadniNalog(models.Model):
 
 
     def save(self, *args, **kwargs):
+        osiguraj_cijene_dnevnica()
         self.izracun_dnevnica()
         super().save(*args, **kwargs)
 
@@ -252,7 +253,26 @@ def osvjezi_radni_nalog(tura):
     rn.vrijeme_granica_polazak = tura.granica_polazak #type: ignore
     rn.vrijeme_granica_povratak = tura.granica_povratak #type: ignore
 
-    rn.save()   
+    rn.save() 
+    
+def osiguraj_cijene_dnevnica():
+    default_cijene = {
+        'BiH': 12.5,
+        'Austrija': 90,
+        'Njemačka': 90,
+        'Slovenija': 80,
+        'Francuska': 90,
+        'Hrvatska': 50,
+        'Mađarska': 70,
+        'Švicarska': 90,
+        'Italija': 80,
+    }
+
+    for drzava, iznos in default_cijene.items():
+        CijenaDnevnica.objects.get_or_create(
+            drzava=drzava,
+            defaults={'iznos': iznos}
+        )  
     
 # models.py - dodaj na kraj
 class CijenaDnevnica(models.Model):
