@@ -806,10 +806,15 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         messages.info(request, f"Nema radnih naloga za period od {datum_od} do {datum_do}.")
         return redirect('profil_vozaca', vozac_id=vozac.id)#type: ignore
 
-    template_path = os.path.join(BASE_DIR, "excel_template", "template.xlsx")
+    #template_path = os.path.join(BASE_DIR, "excel_template", "template.xlsx")
 
     for rn in radni_nalozi:
     # 1. Otvori template
+        if rn.tura.vozac.valuta == "EUR":
+            template_path = os.path.join(BASE_DIR, "excel_template", "template_rh.xlsx")
+        else:
+            template_path = os.path.join(BASE_DIR, "excel_template", "template.xlsx")
+            
         wb = load_workbook(template_path)
         ws = wb["PutniNalog"]
         
@@ -834,7 +839,7 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         ws["T5"] = rn.tura.datum_dolaska.strftime('%H:%M') if rn.tura.datum_dolaska else ""
         ws["O6"] = ukupni_dani
         ws["U6"] = ostatak_sati
-        ws["A9"] = "BiH"
+        ws["A9"] = "Hrvatska" if rn.tura.vozac.valuta == "EUR" else "Bosna i Hercegovina"
         ws["A10"] = rn.konacna_drzava if rn.konacna_drzava else ""
         ws["L9"] = f"{tuzemne_dnev:.1f}" if tuzemne_dnev else 0
         ws["L10"] = f"{inozemne_dnev:.1f}" if inozemne_dnev else 0
@@ -852,10 +857,13 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         ws["AF5"] = datetime.now().strftime('%d.%m.%Y')
         ws["AF16"] = rn.tura.vozac.ime if rn.tura.vozac.ime else ""
         ws["AK17"] = "vozač"
-        ws["AN18"] = f"BiH - {rn.konacna_drzava}"
+        ws["AN18"] = f"{'Hrvatska' if rn.tura.vozac.valuta == 'EUR' else 'Bosna i Hercegovina'} - {rn.konacna_drzava}"
         ws["AF19"] = "obavljanja prijevoza"
         ws["AN21"] = rn.tura.datum_polaska.strftime('%d.%m.%Y') if rn.tura.datum_polaska else ""
         ws["AT21"] = rn.tura.datum_dolaska.strftime('%d.%m.%Y') if rn.tura.datum_dolaska else ""
+        ws["AZ23"] = rn.tura.vozac.valuta if rn.tura.vozac.valuta else ""
+        ws["AZ28"] = rn.tura.vozac.valuta if rn.tura.vozac.valuta else ""
+        
         try:
             ws["AK25"] = vozilo.ime if vozilo.ime else ""  
         except AttributeError:
