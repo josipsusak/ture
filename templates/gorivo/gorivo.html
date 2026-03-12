@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-warning">
+          {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Alert za skoro prazan tank -->
+  {% if tank.upozorenje_prazan_tank %}
+  <div class="alert alert-danger">
+    ⚠️ Tank je skoro prazan! (< 500 L)
+  </div>
+  {% endif %}
+
+<!-- Ukupno stanje -->
+<div class="card text-white bg-primary mb-4 position-relative">
+  <div class="card-body">
+    <h3 class="card-title d-inline-block">Ukupno gorivo u tanku</h3>
+    
+    <!-- Dugme za punjenje tanka gore desno -->
+    <a href="#" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2" 
+       data-bs-toggle="collapse" data-bs-target="#formRaspodjela">Napuni tank</a>
+    
+    <p class="display-4 mt-3">{{ tank.ukupno_stanje }} L</p>
+
+    <!-- Collapse forma -->
+    <div class="collapse mt-2" id="formRaspodjela">
+    <form method="post" action="{% url 'dodaj_refill' %}">
+        {% csrf_token %}
+        {{ refill_form.kapacitet.label_tag }} {{ refill_form.kapacitet }}
+        {{ refill_form.bih_gorivo.label_tag }} {{ refill_form.bih_gorivo }}
+        {{ refill_form.rh_gorivo.label_tag }} {{ refill_form.rh_gorivo }}
+        <button type="submit" class="btn btn-primary btn-sm mt-2">Spremi</button>
+    </form>
+    </div>
+
+  </div>
+</div>
+
+  <!-- BIH i RH kartice -->
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card border-success mb-4">
+        <div class="card-header bg-success text-white">IH Transport</div>
+        <div class="card-body">
+          <p><strong>Stanje IH Transport:</strong> {{ tank.stanje_bih }} L</p>
+          <!-- Forma za dodavanje potrošnje BIH -->
+          <form method="post" action="{% url 'dodaj_potrosnju' %}" class="mt-2">
+            {% csrf_token %}
+            {{ potrosnja_form.as_p }}
+            <input type="hidden" name="drzava" value="bih">
+            <button type="submit" class="btn btn-success">Dodaj potrošnju IH Transport</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card border-warning mb-4">
+        <div class="card-header bg-warning text-dark">Hrkać logistika</div>
+        <div class="card-body">
+          <p><strong>Stanje Hrkać logistika:</strong> {{ tank.stanje_rh }} L</p>
+          <!-- Forma za dodavanje potrošnje RH -->
+          <form method="post" action="{% url 'dodaj_potrosnju' %}" class="mt-2">
+            {% csrf_token %}
+            {{ potrosnja_form.as_p }}
+            <input type="hidden" name="drzava" value="rh">
+            <button type="submit" class="btn btn-warning text-dark">Dodaj potrošnju Hrkać logistika</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Povijest transakcija -->
+  <h4>Povijest transakcija</h4>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Datum</th>
+        <th>Tip</th>
+        <th>Država</th>
+        <th>Količina</th>
+        <th>Napomena</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in transakcije %}
+      <tr>
+        <td>{{ t.datum|date:"d.m.Y H:i" }}</td>
+        <td>{{ t.get_tip_display }}</td>
+        <td>{{ t.get_drzava_display }}</td>
+        <td>{{ t.kolicina }}</td>
+        <td>{{ t.napomena }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+{% endblock %}

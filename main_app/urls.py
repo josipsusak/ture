@@ -7,5 +7,6 @@ from django.urls import path, include
 from main_app import views
 
 urlpatterns = [
-    path("", include("ture.urls")) 
+    path("", include("ture.urls")),
+    path("gorivo/", include("gorivo.urls"))  
 ]

@@ -25,6 +25,7 @@
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'popis_vozaca' %}active{% endif %}" href="{% url 'popis_vozaca' %}">Vozači</a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'popis_vozila' %}active{% endif %}" href="{% url 'popis_vozila' %}">Vozila</a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'cijene_dnevnica' %}active{% endif %}" href="{% url 'cijene_dnevnica' %}">Cijene dnevnica</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'gorivo' %}active{% endif %}" href="{% url 'gorivo' %}">Gorivo</a></li>
         <li class="nav-item"><a class="btn btn-sm btn-danger" href="{% url 'logout' %}">Odjava</a></li>
         {% endif %}
       </ul>
