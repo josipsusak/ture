@@ -86,7 +86,8 @@
       <tr>
         <th>Datum</th>
         <th>Tip</th>
-        <th>Država</th>
+        <th>Vozilo</th>
+        <th>Firma</th>
         <th>Količina</th>
         <th>Napomena</th>
       </tr>
@@ -96,7 +97,16 @@
       <tr>
         <td>{{ t.datum|date:"d.m.Y H:i" }}</td>
         <td>{{ t.get_tip_display }}</td>
-        <td>{{ t.get_drzava_display }}</td>
+        <td>{{ t.vozilo }}</td>
+        <td>
+          {% if t.drzava == "bih" %}
+            IH Transport
+          {% elif t.drzava == "rh" %}
+            Hrkać Logistika
+          {% else %}
+            -
+          {% endif %}
+        </td>
         <td>{{ t.kolicina }}</td>
         <td>{{ t.napomena }}</td>
       </tr>

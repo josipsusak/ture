@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from ture.models import Vozilo
 
 class Tank(models.Model):
     kapacitet = models.FloatField(default=5000)
@@ -47,11 +48,15 @@ class TransakcijaGoriva(models.Model):
     kolicina = models.FloatField()
     datum = models.DateTimeField(auto_now_add=True)
     napomena = models.TextField(blank=True, null=True)
+    vozilo = models.ForeignKey(Vozilo,on_delete=models.SET_NULL,null=True,blank=True,related_name="tocenja")
 
     def __str__(self):
         return f"{self.tip} {self.kolicina} L ({self.drzava})"
 
     def clean(self):
+        if self.tip == "potrosnja" and not self.vozilo:
+            raise ValidationError("Kod potrošnje mora biti odabrano vozilo.")
+        
         if self.tip == "refill":
             trenutno = self.tank.ukupno_stanje
 

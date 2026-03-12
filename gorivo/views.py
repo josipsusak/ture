@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from .models import Tank, TransakcijaGoriva
 from .forms import PotrosnjaForm, RefillForm, RaspodjelaForm
 
@@ -35,6 +36,39 @@ def dodaj_potrosnju(request):
             transakcija.tip = "potrosnja"
             transakcija.drzava = request.POST.get("drzava")  # bih ili rh
             transakcija.save()
+    return redirect("gorivo")
+
+def dodaj_potrosnju(request):
+    tank = Tank.objects.first()
+    if not tank:
+        tank = Tank.objects.create()
+
+    if request.method == "POST":
+        form = PotrosnjaForm(request.POST)
+        if form.is_valid():
+            try:
+                transakcija = form.save(commit=False)
+                transakcija.tank = tank
+                transakcija.tip = "potrosnja"
+                transakcija.drzava = request.POST.get("drzava")  # bih ili rh
+                transakcija.save()
+                messages.success(request, "Potrošnja uspješno spremljena.")
+            except ValidationError as e:
+                # direktno u messages.error
+                if hasattr(e, "message_dict"):
+                    poruke = []
+                    for polje, msgs in e.message_dict.items():
+                        poruke.extend(msgs)
+                    messages.error(request, " ".join(poruke))
+                else:
+                    messages.error(request, str(e))
+
+            return redirect("gorivo")
+
+        else:
+            messages.error(request, "Molimo popunite sve obavezne podatke ispravno.")
+            return redirect("gorivo")
+
     return redirect("gorivo")
 
 

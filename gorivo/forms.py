@@ -1,17 +1,21 @@
-
 from django import forms
 from .models import TransakcijaGoriva, Tank
 
 class PotrosnjaForm(forms.ModelForm):
     class Meta:
         model = TransakcijaGoriva
-        fields = ["kolicina", "napomena"]
+        fields = ["kolicina",'vozilo', "napomena"]
+        
+        labels = {
+            "kolicina": "Količina (L)",
+            "vozilo": "Vozilo",
+            "napomena": "Napomena",
+        }
     
         widgets = {
-            "napomena": forms.Textarea(attrs={
-                "rows": 2,
-                "class": "form-control"
-            })
+            "vozilo": forms.Select(attrs={"class": "form-control"}),
+            "kolicina": forms.NumberInput(attrs={"class": "form-control"}),
+            "napomena": forms.TextInput(attrs={"class": "form-control"}),
         }
 
     def save(self, commit=True):
@@ -23,12 +27,16 @@ class PotrosnjaForm(forms.ModelForm):
 
 
 class RefillForm(forms.ModelForm):
-    bih_gorivo = forms.FloatField(min_value=0, label="BiH (L)")
-    rh_gorivo = forms.FloatField(min_value=0, label="RH (L)")
+    bih_gorivo = forms.FloatField(min_value=0, label="IH Transport (L)")
+    rh_gorivo = forms.FloatField(min_value=0, label="Hrkać logistika (L)")
 
     class Meta:
         model = Tank
         fields = ["kapacitet"]
+        
+        labels = {
+            "kapacitet": "Kapacitet tanka (L)",
+        }
 
     def __init__(self, *args, **kwargs):
         tank = kwargs.pop("tank", None)
@@ -39,12 +47,16 @@ class RefillForm(forms.ModelForm):
             self.fields["kapacitet"].initial = tank.kapacitet
     
 class RaspodjelaForm(forms.ModelForm):
-    bih_gorivo = forms.FloatField(min_value=0, label="Gorivo za BiH")
-    rh_gorivo = forms.FloatField(min_value=0, label="Gorivo za RH")
+    bih_gorivo = forms.FloatField(min_value=0, label="Gorivo za IH Transport")
+    rh_gorivo = forms.FloatField(min_value=0, label="Gorivo za Hrkać logistika")
 
     class Meta:
         model = Tank
-        fields = ["kapacitet"]  # ukupni kapacitet
+        fields = ["kapacitet"]
+        
+        labels = {
+            "kapacitet": "Ukupni kapacitet tanka (L)",
+        }
 
     def __init__(self, *args, **kwargs):
         tank = kwargs.pop("tank", None)
@@ -62,6 +74,6 @@ class RaspodjelaForm(forms.ModelForm):
 
         if bih + rh > ukupno:
             raise forms.ValidationError(
-                "Zbroj BIH i RH goriva ne može biti veći od ukupnog kapaciteta tanka!"
+                "Zbroj IH Transport i Hrkać logistika goriva ne može biti veći od ukupnog kapaciteta tanka!"
             )
         return cleaned
