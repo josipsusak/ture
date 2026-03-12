@@ -78,6 +78,46 @@
     </div>
   </div>
 
+<div class="card mb-3 p-3">
+  <form method="get" class="row g-2 align-items-end">
+    <!-- Firma -->
+    <div class="col-auto">
+      <label for="firmaFilter" class="form-label">Firma</label>
+      <select name="firma" id="firmaFilter" class="form-select">
+        <option value="">Sve firme</option>
+        <option value="bih" {% if filter_firma == "bih" %}selected{% endif %}>IH Transport</option>
+        <option value="rh" {% if filter_firma == "rh" %}selected{% endif %}>Hrkać Logistika</option>
+      </select>
+    </div>
+
+    <!-- Datum -->
+    <div class="col-auto">
+      <label for="datumFilter" class="form-label">Datum od</label>
+      <input type="datetime-local" name="datum" id="datumFilter" class="form-control" 
+             value="{{ filter_datum|default_if_none:'' }}">
+    </div>
+
+    <!-- Vozilo -->
+    <div class="col-auto">
+      <label for="voziloFilter" class="form-label">Vozilo</label>
+      <select name="vozilo" id="voziloFilter" class="form-select">
+        <option value="">Sva vozila</option>
+        {% for voz in vozila %}
+          <option value="{{ voz.0 }}" {% if filter_vozilo == voz.0|stringformat:"s" %}selected{% endif %}>
+            {{ voz.1 }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Dugmad: Filtriraj + Export -->
+    <div class="col-auto d-flex align-items-end ms-auto">
+      <button type="submit" class="btn btn-primary me-2">Filtriraj</button>
+      <a href="{% url 'export_excel' %}?firma={{ filter_firma }}&datum={{ filter_datum }}&vozilo={{ filter_vozilo }}" 
+         class="btn btn-success">Export u Excel</a>
+    </div>
+  </form>
+</div>
 
   <!-- Povijest transakcija -->
   <h4>Povijest transakcija</h4>
