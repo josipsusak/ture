@@ -225,7 +225,10 @@ class RadniNalog(models.Model):
 
         # --- 10. Konačni izračun u EUR ---
         cij_ino = cijene.get(self.konacna_drzava, 50)
-        cij_tuz = cijene.get('BiH', 12.5)
+        if self.tura.vozac.valuta == 'EUR':
+            cij_tuz = cijene.get('Hrvatska', 50)
+        else:
+            cij_tuz = cijene.get('BiH', 12.5)
 
         if self.tura.vozac.valuta == 'EUR':
             self.inozemne_dnevnice = round(inozemne_dnev * cij_ino, 2)
