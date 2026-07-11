@@ -828,10 +828,12 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         cijena_tuzemne = cijene_dnevnica.filter(drzava='BiH').first().iznos if cijene_dnevnica.filter(drzava='BiH').exists() else 0
         cijena_inozemne = cijene_dnevnica.filter(drzava=rn.konacna_drzava).first().iznos if cijene_dnevnica.filter(drzava=rn.konacna_drzava).exists() else 0
         
-        tuzemne_dnev = float(rn.tuzemne_dnevnice) / cijena_tuzemne
-        inozemne_dnev = float(rn.inozemne_dnevnice) / cijena_inozemne
+        #tuzemne_dnev = float(rn.tuzemne_dnevnice) / cijena_tuzemne
+        tuzemne_dnev = float(rn.tuzemne_dnevnice) / cijena_inozemne
+        inozemne_dnev =float(rn.inozemne_dnevnice) / cijena_inozemne
+        ukupnoDnev = (tuzemne_dnev or 0) + (inozemne_dnev or 0)
+        ukupnoDnevnice = round(ukupnoDnev*2)/2 
         
- 
         # 2. Popuni fiksne lokacije
         ws["G4"] = rn.tura.datum_polaska.strftime('%d.%m.%Y') if rn.tura.datum_polaska else ""
         ws["G5"] = rn.tura.datum_dolaska.strftime('%d.%m.%Y') if rn.tura.datum_dolaska else ""
@@ -839,22 +841,23 @@ def export_vozacev_tjedan_pdf(request, vozac_id):
         ws["T5"] = rn.tura.datum_dolaska.strftime('%H:%M') if rn.tura.datum_dolaska else ""
         ws["O6"] = ukupni_dani
         ws["U6"] = ostatak_sati
-        ws["A9"] = "Hrvatska" if rn.tura.vozac.valuta == "EUR" else "Bosna i Hercegovina"
-        ws["A10"] = rn.konacna_drzava if rn.konacna_drzava else ""
-        ws["L9"] = f"{tuzemne_dnev:.1f}" if tuzemne_dnev else 0
-        ws["L10"] = f"{inozemne_dnev:.1f}" if inozemne_dnev else 0
+        ws["A9"] = rn.konacna_drzava if rn.konacna_drzava else ""#"Hrvatska" if rn.tura.vozac.valuta == "EUR" else "Bosna i Hercegovina"
+        #ws["A10"] = rn.konacna_drzava if rn.konacna_drzava else ""
+        ws["L9"] = f"{ukupnoDnevnice:.1f}" if ukupnoDnevnice else 0
+        #ws["L10"] = f"{inozemne_dnev:.1f}" if inozemne_dnev else 0
         ws["O8"] = f"IZNOS {rn.tura.vozac.valuta}"
         ws["T8"] = f"UKUPNO {rn.tura.vozac.valuta}"
-        ws["O9"] = cijena_tuzemne #if cijena_tuzemne else 0
-        ws["O10"] = cijena_inozemne #if cijena_inozemne else 0
-        ws["T9"] = rn.tuzemne_dnevnice if rn.tuzemne_dnevnice else 0
-        ws["T10"] = rn.inozemne_dnevnice if rn.inozemne_dnevnice else 0
+        ws["O9"] = cijena_tuzemne + cijena_inozemne #if cijena_tuzemne else 0
+        #ws["O10"] = cijena_inozemne #if cijena_inozemne else 0
+        #ws["T9"] = rn.tuzemne_dnevnice if rn.tuzemne_dnevnice else 0
+        ws["T9"] = cijena_tuzemne + cijena_inozemne
+        #ws["T10"] = rn.inozemne_dnevnice if rn.inozemne_dnevnice else 0
         ws["T14"] = rn.papiri if rn.papiri else 0
         ws["T15"] = rn.terminali if rn.terminali else 0
         ws["T16"] = rn.cestarine if rn.cestarine else 0
         ws["AC1"] = tekst_firme
         ws["AF4"] = rn.tura.broj_putnog_naloga if rn.tura.broj_putnog_naloga else ""
-        ws["AF5"] = datetime.now().strftime('%d.%m.%Y')
+        ws["AF5"] = rn.tura.datum_polaska.strftime('%d.%m.%Y') if rn.tura.datum_polaska else ""
         ws["AF16"] = rn.tura.vozac.ime if rn.tura.vozac.ime else ""
         ws["AK17"] = "vozač"
         ws["AN18"] = f"{'Hrvatska' if rn.tura.vozac.valuta == 'EUR' else 'Bosna i Hercegovina'} - {rn.konacna_drzava}"
