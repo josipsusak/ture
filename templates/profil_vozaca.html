@@ -139,7 +139,11 @@
                     <tbody>
                         {% for tura in ture %}
                         <tr>
-                            <td>{{ tura.relacija }}</td>
+                            <td>
+                                <a href="{% url 'profil_ture' tura.id %}">
+                                    {{ tura.relacija }}
+                                </a>
+                            </td>
                             <td>{{ tura.datum_polaska|date:"d.m.Y" }}</td>
                             <td>{{ tura.datum_dolaska|date:"d.m.Y" }}</td>
                             <td>{{ tura.kilometraza }}</td>
